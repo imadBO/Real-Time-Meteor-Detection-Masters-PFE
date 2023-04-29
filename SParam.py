@@ -17,7 +17,7 @@ class detectionParam:
         self.DET_ENABLED:bool = False
         self.DET_MODE:TimeMode = None
         self.DET_DEBUG:bool = True # Change it back to false .
-        self.DET_DEBUG_PATH:str = "PFE"
+        self.DET_DEBUG_PATH:str = "Real-Time-Meteor-Detection-Masters-PFE"
         self.DET_TIME_AROUND:int = 0
         self.DET_TIME_MAX:int = 0
         self.DET_METHOD:DetMeth = None

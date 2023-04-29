@@ -9,7 +9,7 @@ import Frame
 from Frame import *
   
 # Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture('PFE/meteor5.flv')
+cap = cv2.VideoCapture('meteor5.flv')
   
 # Check if camera opened successfully
 if (cap.isOpened()== False):
