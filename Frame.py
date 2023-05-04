@@ -4,8 +4,8 @@ from TimeDate import TimeDate
 class Frame:
     mFrameNumber = 0 # Each frame is identified by a number corresponding to the acquisition order
     def __init__(self, capImg, g, e, acquisitionDate):
-        # self.mDate:TimeDate = TimeDate.splitIsoExtendedDate(acquisitionDate) # Acquisition date
-        self.mDate = acquisitionDate
+        self.mDate:TimeDate = TimeDate.splitIsoExtendedDate(acquisitionDate) # Acquisition date
+        # self.mDate = acquisitionDate
         self.mExposure = e # Camera's exposure value used to grab the frame
         self.mGain = g # Camera's gain value used to grab the frame
         self.mFormat:CamPixFmt = CamPixFmt.MONO8 # Pixel format

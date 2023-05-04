@@ -75,7 +75,7 @@ def subdivideFrame(n, imgH, imgW):
         if direction == 1:
 
             y = y - subH
-            sub.append(Point(x,y))
+            sub.append(Point(y,x))
             nbDirection += 1
             if nbDirection == nbDirectionLimit:
                 nbDirection = 0
@@ -84,7 +84,7 @@ def subdivideFrame(n, imgH, imgW):
         elif direction == 2:
 
             x = x + subW
-            sub.append(Point(x,y))
+            sub.append(Point(y,x))
             nbDirection += 1
             if nbDirection == nbDirectionLimit:
                 nbDirection = 0
@@ -94,7 +94,7 @@ def subdivideFrame(n, imgH, imgW):
         elif direction == 3:
 
             y = y + subH
-            sub.append(Point(x,y))
+            sub.append(Point(y,x))
             nbDirection += 1
             if nbDirection == nbDirectionLimit:
                 nbDirection = 0
@@ -103,12 +103,13 @@ def subdivideFrame(n, imgH, imgW):
         elif direction == 4:
 
             x = x - subW
-            sub.append(Point(x,y))
+            sub.append(Point(y,x))
             nbDirection += 1
             if nbDirection == nbDirectionLimit:
                 nbDirection = 0
                 nbDirectionLimit += 1
                 direction = 1
+
     return np.array(sub)
 
 def thresholding(img, mask, factor, threshType):

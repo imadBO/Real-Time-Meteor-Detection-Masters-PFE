@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from LocalEvent import *
+from Frame import Frame
 from Types import Point
 
 class GlobalEvent :
@@ -12,19 +13,19 @@ class GlobalEvent :
         self.geMap = np.full((frameHeight,frameWidth),0,dtype=np.uint8)
         self.geFirstFrameNum = frameNum
         self.geLastFrameNum =frameNum
-        self.geDirMap = np.full((frameHeight, frameWidth), np.array([0,0,0],dtype=np.uint8))
+        self.geDirMap = np.full((frameHeight, frameWidth,3), 0,dtype=np.uint8)
         self.geShifting = 0
-        self.newLeAdded
+        self.newLeAdded = False
         self.geLinear = True
         self.geBadPoint = 0
         self.geGoodPoint = 0
         self.geColor = color
-        self.geMapColor = np.full((frameHeight, frameWidth), np.array([0,0,0],dtype=np.uint8))
+        self.geMapColor = np.full((frameHeight, frameWidth, 3), 0,dtype=np.uint8)
         # public vars :
         self.LEList = np.array([], dtype=LocalEvent)
         self.ptsValidity = np.array([], dtype=bool)
-        self.distBtwPts
-        self.distBtwMainPts
+        self.distBtwPts = 0
+        self.distBtwMainPts = 0
         self.mainPts = np.array([], dtype=Point)
         self.pts = np.array([], dtype=Point)
         self.leDir:Point = None
@@ -47,14 +48,14 @@ class GlobalEvent :
         addLeDecision = True
 
         # First LE's position become a main point .
-        if self.pts.size() == 0 :
+        if self.pts.size == 0 :
             self.mainPts = np.append(self.mainPts, center)
             self.geGoodPoint += 1
             self.ptsValidity = np.append(self.ptsValidity, True)
 
         # If the current LE is at least the second .
-        elif self.pts.size() > 0:
-            if self.listv > 1 :
+        elif self.pts.size > 0:
+            if self.listv.size > 1 :
                 scalar = le.getLeDir().x * self.listv[-1].x + le.getLeDir().y * self.listv[-1].y
                 self.leDir = le.getLeDir()
                 if scalar <= 0.0 :
@@ -62,9 +63,9 @@ class GlobalEvent :
                 else :
                     self.clusterNegPos = np.append(self.clusterNegPos, True)
             # Check global event direction each 3 LEs .
-            if (self.pts.size()+1)%3 == 0 :
+            if (self.pts.size +1)%3 == 0 :
                 # If there is at least 2 main points .
-                if self.mainPts.size() >=2 :
+                if self.mainPts.size >=2 :
                     # Get the first main point .
                     A = self.mainPts[0]
                     self.listA = np.append(self.listA, A)
@@ -75,11 +76,11 @@ class GlobalEvent :
                     C = center
                     self.listC = np.append(self.listC, C)
                     # Vector from first main point to last main point .
-                    u = Point(x=B.x-A.x, y=B.y-A.y)
+                    u= Point(x= A.x - B.x, y= A.y - B.y)
                     self.listu = np.append(self.listu, u)
 
                     # Vector from last main point to current LE position .
-                    v = Point(x=C.x-B.x, y=C.y-B.y)
+                    v = Point(x = B.x - C.x, y= B.y - C.y)
                     self.listv = np.append(self.listv, v)
                     self.geDir = v
 
@@ -96,46 +97,46 @@ class GlobalEvent :
                         # self.mainPts = np.append(self.mainPts, center)
                         # self.ptsValidity = np.append(self.ptsValidity, True)
                         # self.mainPtsValidity = np.append(self.mainPtsValidity, True)
-                        # cv2.circle(self.geDirMap, center, 5, (255, 255, 255), 1, cv2.LINE_AA, 0)
+                        # cv2.circle(self.geDirMap, (center.y, center.x), 5, (255, 0, 0), 1, cv2.LINE_AA, 0)
                     else :
                         # Birds filter 
-                        # scalar = le.getLeDir()[0] * v[0] + le.getLeDir()[1] * v[1]
-                        # if scalar <= 0.0 :
-                        #     self.clusterNegPos = np.append(self.clusterNegPos, False)
-                        # else :
-                        #     self.clusterNegPos = np.append(self.clusterNegPos, True)
+                        scalar = le.getLeDir().x * v.x + le.getLeDir().y * v.y
+                        if scalar <= 0.0 :
+                            self.clusterNegPos = np.append(self.clusterNegPos, False)
+                        else :
+                            self.clusterNegPos = np.append(self.clusterNegPos, True)
 
                         # Norm vector u .
                         normU = sqrt(pow(u.x,2) + pow(u.y,2))
                         # Norm vector v .
                         normV = sqrt(pow(v.x,2)+pow(v.y,2))
                         # Compute angle between u and v .
-                        thetaRad = (u.x*v.x+u.y*v.y)/(normU*normV)
+                        thetaRad = round((u.x*v.x+u.y*v.y)/(normU*normV),8)
                         self.listRad = np.append(self.listRad, thetaRad)
-                        thetaDeg = (180 * acos(thetaRad))/pi
+                        thetaDeg = round((180 * acos(thetaRad))/pi, 8)
                         self.listAngle = np.append(self.listAngle, thetaDeg)
                         
                         if thetaDeg > 40.0 or thetaDeg < -40.0 :
                             self.geBadPoint += 1
-                            if self.geBadPoint == 2 :
+                            if self.geBadPoint == 3 :
                                 self.geLinear = False
                             addLeDecision = False
                             self.ptsValidity = np.append(self.ptsValidity, False)
                             self.mainPtsValidity = np.append(self.mainPtsValidity, False)
-                            cv2.circle(self.geDirMap, center, 5, (0, 0, 255), 1, cv2.LINE_AA, 0)
+                            cv2.circle(self.geDirMap, (center.y, center.x), 5, (0, 0, 255), 1, cv2.LINE_AA, 0)
                         else :
                             self.geBadPoint = 0
                             self.geGoodPoint += 1
                             self.mainPts = np.append(self.mainPts, center)
                             self.ptsValidity = np.append(self.ptsValidity, True)
                             self.mainPtsValidity = np.append(self.mainPtsValidity, True)
-                            cv2.circle(self.geDirMap, center, 5, (255, 255, 255), 1, cv2.LINE_AA, 0)
+                            cv2.circle(self.geDirMap, (center.y, center.x), 5, (255, 255, 255), 1, cv2.LINE_AA, 0)
                 else :
                     # Create new main point .
                     self.mainPts = np.append(self.mainPts, center)
                     self.geGoodPoint += 1
                     self.ptsValidity = np.append(self.ptsValidity, True)
-                    cv2.circle(self.geDirMap, center, 5, (255, 255, 255), 1, 8, 0)
+                    cv2.circle(self.geDirMap, (center.y , center.x), 5, (0, 255, 0), 1, 8, 0)
         # Add the LE in input to the current GE .
         if addLeDecision :
             # Save center of mass .
@@ -149,7 +150,7 @@ class GlobalEvent :
             # Update colored ge map .
             roiH, roiW = 10, 10
             for pt in le.mLeRoiList :
-                roi = np.zeros((roiH, roiW), dtype=np.uint8)
+                roi = np.zeros((roiH, roiW, 3), dtype=np.uint8)
                 roi[:,:] = self.geColor
                 self.geMapColor[pt.x-roiH//2:pt.x+roiH//2, pt.y-roiW//2:pt.y+roiW//2] = roi
             # Update dirMap .
@@ -161,7 +162,7 @@ class GlobalEvent :
     
     def ratioFramesDist(self,msg:str) :
         msg += " ratioFrameDist\n"
-        dist = sqrt(pow(self.mainPts[-1].x-self.mainPts[0].x,2)+pow(self.mainPts[-1].y-self.mainPts[0].y))
+        dist = sqrt(pow(self.mainPts[-1].x-self.mainPts[0].x,2)+pow(self.mainPts[-1].y-self.mainPts[0].y, 2))
         msg += "d = " + str(dist) + " \n"
         n = self.geLastFrameNum - self.geFirstFrameNum
         msg += "n = " + str(n) +" \n"
@@ -175,9 +176,9 @@ class GlobalEvent :
     def continuousGoodPos(self, n:int, msg:str):
         msg += "continuousGoodPos\n"
         nb, nn = 0, 0
-        msg += "size pts validity : " + str(self.ptsValidity.size()) + "\n"
-        for i in range(0, self.ptsValidity.size()):
-            if not self.ptsValidity[i] :
+        msg += "size pts validity : " + str(self.ptsValidity.size) + "\n"
+        for i in range(0, self.ptsValidity.size):
+            if self.ptsValidity[i] :
                 nb += 1
                 nn = 0
                 if nb >= n :
@@ -193,7 +194,7 @@ class GlobalEvent :
 
     def continuousBadPos(self, n:int):
         nb, nn = 0, 0
-        for i in range(0, self.ptsValidity.size()):
+        for i in range(0, self.ptsValidity.size):
             if not self.ptsValidity[i] :
                 nb += 1
                 nn = 0
@@ -210,14 +211,14 @@ class GlobalEvent :
     def negPosClusterFilter(self, msg:str):
         msg += "negPosClusterFilter\n"
         counter = 0
-        msg += "clusterNegPos size = "+ str(self.clusterNegPos.size())+"\n"
-        for i in range(0, self.clusterNegPos.size()):
+        msg += "clusterNegPos size = "+ str(self.clusterNegPos.size)+"\n"
+        for i in range(0, self.clusterNegPos.size):
             if self.clusterNegPos[i]:
                 msg += "clusterNegPos true\n"
                 counter += 1
             else :
                 msg += "clusterNegPos false\n"
-        if counter >= float(self.clusterNegPos.size())/2.0 and counter != 0 :
+        if counter >= float(self.clusterNegPos.size)/2.0 and counter != 0 :
             msg += "negPosClusterFilter = OK"
             return (True, msg)
         else:

@@ -20,7 +20,7 @@ class LocalEvent:
         self.mPosCluster = False
         self.mNegCluster = False
         self.mergedFlag = False
-        self.uNegToPos:Point = None
+        self.uNegToPos:Point = Point(0,0)
         self.index = 0
 
         # should be public .
@@ -38,7 +38,6 @@ class LocalEvent:
         # Add the first ROI to the LE map .
         self.roi = np.full((roiSize[1], roiSize[0]), 255, dtype=np.uint8)
         x, y = roiPos.x, roiPos.y
-        roiRect = (x - roiSize[0] // 2, y - roiSize[1] // 2, roiSize[0], roiSize[1])
         self.mLeMap[x - roiSize[0] // 2:x + roiSize[0] // 2, y - roiSize[1] // 2:y + roiSize[1] // 2] = self.roi
 
     def computeMassCenter(self):
@@ -46,10 +45,10 @@ class LocalEvent:
         for point in self.mAbsPos :
             x += point.x
             y += point.y
-        x = x / self.mAbsPos.size
-        y = y / self.mAbsPos.size
+        x = x // self.mAbsPos.size
+        y = y // self.mAbsPos.size
 
-        self.mLeMassCenter = Point(x=int(x),y= int(y))
+        self.mLeMassCenter = Point(x=int(x),y=int(y))
 
     def setMap(self, roiPos:Point, roiSize):
         # Add the first ROI to the LE map .
@@ -83,8 +82,8 @@ class LocalEvent:
                 mapy[posPoint.x, posPoint.y] = np.array([0,255,0])
                 xPos += posPoint.x
                 yPos += posPoint.y
-            xPos = xPos / self.mPosPos.size
-            yPos = yPos / self.mPosPos.size
+            xPos = xPos // self.mPosPos.size
+            yPos = yPos // self.mPosPos.size
 
             posMassCenter = Point(x=int(xPos), y=int(yPos))
 
@@ -166,7 +165,6 @@ class LocalEvent:
 
     def mergeWithAnotherLE(self, LE:"LocalEvent"):
         self.mLeRoiList = np.append(self.mLeRoiList, LE.mLeRoiList)
-        distLEs = sqrt(pow(self.mLeMassCenter.x - LE.getMassCenter().x,2)+pow(self.mLeMassCenter.y+LE.getMassCenter().y,2))
         self.completeGapWithRoi(self.mLeMassCenter, LE.getMassCenter())
         self.mAbsPos = np.append(self.mAbsPos, LE.mAbsPos)
         self.mPosPos = np.append(self.mPosPos, LE.mPosPos)
@@ -174,8 +172,8 @@ class LocalEvent:
         self.computeMassCenter()
         temp = self.mLeMap + LE.getMap()
         self.mLeMap = temp.copy()
-        if self.mPosPos.size()!=0 : self.mPosCluster = True
-        if self.mNegPos.size()!=0 : self.mNegCluster = True
+        if self.mPosPos.size!=0 : self.mPosCluster = True
+        if self.mNegPos.size!=0 : self.mNegCluster = True
 
     def completeGapWithRoi(self, p1:Point, p2:Point):
         roi = np.full((10,10),255,dtype=np.uint8)
@@ -184,12 +182,12 @@ class LocalEvent:
         if int(part) != 0 :
             p3 = Point(x=p1.x, y=p2.x)
             dist1 = sqrt(pow(p1.x-p3.x,2)+pow(p1.y-p3.y,2))
-            dist2 = sqrt(pow(p2.x-p3.x)+pow(p2.y-p3.y))
+            dist2 = sqrt(pow(p2.x-p3.x,2)+pow(p2.y-p3.y,2))
             part1 = dist1/part
             part2 = dist2/part
             for i in range(0,int(part)):
                 p = Point(x=int(p3.x+i*part2), y=int(p1.x+i*part1))
-                if p.x-5 > 0 and p.x+5 < self.mLeMap.shape[1] and p.y-5 > 0 and p.y+5 < self.mLeMap.shape[0] :
+                if p.x-5 > 0 and p.x+5 < self.mLeMap.shape[0] and p.y-5 > 0 and p.y+5 < self.mLeMap.shape[1] :
                     self.mLeMap[p.x-5:p.x+5, p.y-5:p.y+5] = roi
 
     def computePosMassCenter(self):
@@ -197,8 +195,8 @@ class LocalEvent:
         for point in self.mPosPos :
             xPos += point.x
             yPos += point.y
-        xPos = xPos / self.mPosPos.size
-        yPos = yPos / self.mPosPos.size
+        xPos = xPos // self.mPosPos.size
+        yPos = yPos // self.mPosPos.size
         self.mPosMassCenter = Point(x=int(xPos), y=int(yPos))
 
     def computeNegMassCenter(self):

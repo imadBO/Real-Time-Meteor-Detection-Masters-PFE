@@ -7,9 +7,10 @@ from SParam import *
 from ECamPixFmt import * 
 import Frame
 from Frame import *
+from datetime import datetime
   
 # Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture('meteor5.flv')
+cap = cv2.VideoCapture('PFE/meteor1.avi')
   
 # Check if camera opened successfully
 if (cap.isOpened()== False):
@@ -24,11 +25,10 @@ while(cap.isOpened()):
     ret, frame = cap.read()
     if ret == True:
     # Display the resulting frame
-        cframe = Frame(frame, 0, 0, "")
-        frame1 = det.runDetection(cframe=cframe)
-        if frame1 is not None :
-            frame = frame1
-        cv2.imshow('Frame', frame)
+        frameDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+        cframe = Frame(frame, 0, 0, frameDate)
+        frame1, _ = det.runDetection(cframe=cframe)
+        cv2.imshow('Frame', frame1)
           
     # Press Q on keyboard to exit
         if cv2.waitKey(25) & 0xFF == ord('q'):

@@ -90,7 +90,7 @@ class Mask:
             diffTime = td.total_seconds() 
             if(diffTime >= self.mUpdateInterval) :
                 self.updateStatus = True
-            print(f"Next mask : {self.mUpdateInterval - int(diffTime)}")
+            # print(f"Next mask : {self.mUpdateInterval - int(diffTime)}")
 
         if self.mCurrentMask.all() == None or (self.mCurrentMask.shape[0] != currFrame.shape[0] and self.mCurrentMask.shape[1] != currFrame.shape[1]):
             self.mMaskToCreate = True
