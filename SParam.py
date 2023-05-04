@@ -17,7 +17,7 @@ class detectionParam:
         self.DET_ENABLED:bool = False
         self.DET_MODE:TimeMode = None
         self.DET_DEBUG:bool = True # Change it back to false .
-        self.DET_DEBUG_PATH:str = "PFE"
+        self.DET_DEBUG_PATH:str = "DEBUG"
         self.DET_TIME_AROUND:int = 0
         self.DET_TIME_MAX:int = 10000
         self.DET_METHOD:DetMeth = None

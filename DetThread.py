@@ -10,7 +10,7 @@ from Frame import *
 from datetime import datetime
   
 # Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture('PFE/meteor1.avi')
+cap = cv2.VideoCapture('meteor1.avi')
   
 # Check if camera opened successfully
 if (cap.isOpened()== False):
