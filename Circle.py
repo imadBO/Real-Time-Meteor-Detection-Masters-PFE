@@ -123,7 +123,6 @@ class Circle:
                         displayIntersectedSurface = True
                     res = True
             else:
-
                 x = (pow(R1,2) - pow(R0,2) - pow(x1,2) + pow(x0,2))/(2*(x0-x1))
                 A = 1.0
                 B = -2 * y1

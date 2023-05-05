@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from math import sqrt, pow, acos
 from Circle import *
+from SParam import detectionParam
 
 
 class LocalEvent:
@@ -60,7 +61,7 @@ class LocalEvent:
         self.mAbsPos = np.append(self.mAbsPos, points)
 
     def addPos(self, points):
-        self.mPosPos = np.array(self.mPosPos, points)
+        self.mPosPos = np.append(self.mPosPos, points)
         if self.mPosPos.size != 0 :
             self.mPosCluster = True
 
@@ -147,9 +148,9 @@ class LocalEvent:
             # Create two circles around the positive and negative clusters with the calculated radiuses .
             posCircle = Circle(self.mPosMassCenter, self.mPosRadius)
             negCircle = Circle(self.mNegMassCenter, self.mNegRadius)
-            
+            dtp = detectionParam()
             # Check if there is an intersection between the two circles .
-            res, surfaceCircle1 , surfaceCircle2 , intersectedSurface = posCircle.computeDiskSurfaceIntersection(negCircle)
+            res, surfaceCircle1 , surfaceCircle2 , intersectedSurface = posCircle.computeDiskSurfaceIntersection(negCircle, dtp.DET_DEBUG, dtp.DET_DEBUG_PATH)
             if not res :
                 return True
             elif surfaceCircle1 != 0 and intersectedSurface !=0 and surfaceCircle2 != 0 :
@@ -158,8 +159,8 @@ class LocalEvent:
                     return False # LE is not valid .
                 else :
                     return True # LE is valid .
-            else:
-                return False # LE is not valid .
+            # else:
+            #     return False # LE is not valid .
             
         return True
 

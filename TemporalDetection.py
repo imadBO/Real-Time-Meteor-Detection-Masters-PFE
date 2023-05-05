@@ -183,7 +183,7 @@ class TemporalDetection:
                 #---------------------------------------------------------------------------------------------#
 
                 tThreshold = time.perf_counter()
-                absDiffBinaryMap = thresholding(absDiffImg, self.mMaskManager.mCurrentMask,4, "MEAN")
+                absDiffBinaryMap = thresholding(absDiffImg, self.mMaskManager.mCurrentMask,3, "MEAN")
                 tThreshold = time.perf_counter() - tThreshold
                 
                 # meanPosDiff, stdevPosDiff, meanNegDiff, stdevNegDiff = 0,0,0,0
@@ -195,8 +195,8 @@ class TemporalDetection:
                 negThreshold = stdevNegDiff[0] * 5 + 10
 
                 if self.mdtp.DET_DEBUG :
-                    posBinaryMap = thresholding(posDiffImg,self.mMaskManager.mCurrentMask, 8, "STDEV")
-                    negBinaryMap = thresholding(negDiffImg,self.mMaskManager.mCurrentMask, 8, "STDEV")
+                    posBinaryMap = thresholding(posDiffImg,self.mMaskManager.mCurrentMask, 5, "STDEV")
+                    negBinaryMap = thresholding(negDiffImg,self.mMaskManager.mCurrentMask, 5, "STDEV")
                     SaveImg.saveJPEG(currImg,self.mDebugCurrentPath + "/original/frame_" + str(Frame.mFrameNumber))  
                     SaveImg.saveJPEG(posBinaryMap,self.mDebugCurrentPath + "/pos_difference_thresholded/frame_" + str(Frame.mFrameNumber))
                     SaveImg.saveJPEG(negBinaryMap,self.mDebugCurrentPath + "/neg_difference_thresholded/frame_" + str(Frame.mFrameNumber))
@@ -285,7 +285,7 @@ class TemporalDetection:
                             nbPotentialNeg += 1
                             itChoose = itLeNeg[j]
                             c = j
-                    
+
                     if nbPotentialNeg == 1 :
                         itLePos[i].mergeWithAnotherLE(itChoose)
                         itLePos[i].setMergedStatus(True)
@@ -293,18 +293,19 @@ class TemporalDetection:
                         del itLeNeg[c]
                 
                 # Delete not merged clusters from positive and negative clusters .
-                for i in range(0, len(listLocalEvents)):
-                    if not listLocalEvents[i].getPosClusterStatus() and listLocalEvents[i].getNegClusterStatus() and listLocalEvents[i].getMergedStatus() :
-                        del listLocalEvents[i]
+                for itEv in listLocalEvents :
+                    if not itEv.getPosClusterStatus() and itEv.getNegClusterStatus() and itEv.getMergedStatus() :
+                        listLocalEvents.remove(itEv)
 
                 #--------------------------------------------------
                 #               Circle Test 
                 #--------------------------------------------------
                 leNumber = len(listLocalEvents)
-                for i in range(0, len(listLocalEvents)) :
-                    if listLocalEvents[i].getPosClusterStatus() and listLocalEvents[i].getNegClusterStatus() :
-                        if not listLocalEvents[i].localEventIsValid() :
-                            del listLocalEvents[i]
+                for ev in listLocalEvents :
+                    # print(f"pos : {ev.getPosClusterStatus()}, neg : {ev.getNegClusterStatus()}")
+                    if ev.getPosClusterStatus() and ev.getNegClusterStatus() :
+                        if not ev.localEventIsValid() :
+                            listLocalEvents.remove(ev)
                 
                 if self.mdtp.DET_DEBUG :
                     eventMapFiltered = np.zeros(eventMap.shape, dtype=np.uint8)
@@ -699,15 +700,14 @@ class TemporalDetection:
                                         for b in range(roiAbsDiff.shape[1]):
                                             if roiAbsDiff[a,b] > 0 :
                                                 whitePixAbsDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if roiPosDiff[a,b].all() > posDiffThreshold : 
+                                            if np.mean(roiPosDiff[a,b]) > posDiffThreshold :
                                                 whitePixPosDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if roiNegDiff[a,b].all() > negDiffThreshold :
+                                            if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
                                                 whitePixNegDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
 
                                 msg = msg + "Number white pix in abs diff : " + str(len(whitePixAbsDiff)) + "\n"
                                 msg = msg + "Number white pix in pos diff : " + str(len(whitePixPosDiff)) + "\n"
                                 msg = msg + "Number white pix in neg diff : " + str(len(whitePixNegDiff)) + "\n"
-
                                 newLocalEvent.addAbs(whitePixAbsDiff)
                                 newLocalEvent.addPos(whitePixPosDiff)
                                 newLocalEvent.addNeg(whitePixNegDiff)

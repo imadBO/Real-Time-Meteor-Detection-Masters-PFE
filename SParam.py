@@ -28,7 +28,7 @@ class detectionParam:
         self.DET_SUM_MTHD:StackMeth = None
         self.DET_SAVE_SUM_WITH_HIST_EQUALIZATION:bool = False
         self.DET_SAVE_AVI:bool = False
-        self.DET_UPDATE_MASK:bool = True
+        self.DET_UPDATE_MASK:bool = False
         self.DET_UPDATE_MASK_FREQUENCY:int = 2
         self.DET_DEBUG_UPDATE_MASK:bool = False
         self.DET_DOWNSAMPLE_ENABLED:bool = True

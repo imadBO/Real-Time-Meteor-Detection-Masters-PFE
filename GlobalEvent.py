@@ -33,8 +33,8 @@ class GlobalEvent :
         self.listA = np.array([], dtype=Point) 
         self.listB = np.array([], dtype=Point)
         self.listC = np.array([], dtype=Point)
-        self.listu = np.array([], dtype=Point)
-        self.listv = np.array([], dtype=Point)
+        self.listu = np.array([], dtype=Point) # List of vectors from first main point to last main point position .
+        self.listv = np.array([], dtype=Point) # List of vectors from last main point to current LE position .
         self.listAngle = np.array([], dtype=float)
         self.listRad = np.array([], dtype=float)
         self.mainPtsValidity = np.array([], dtype=bool)
@@ -76,11 +76,11 @@ class GlobalEvent :
                     C = center
                     self.listC = np.append(self.listC, C)
                     # Vector from first main point to last main point .
-                    u= Point(x= A.x - B.x, y= A.y - B.y)
+                    u= Point(x= B.x - A.x, y= B.y - A.y)
                     self.listu = np.append(self.listu, u)
 
                     # Vector from last main point to current LE position .
-                    v = Point(x = B.x - C.x, y= B.y - C.y)
+                    v = Point(x = C.x - B.x, y= C.y - B.y)
                     self.listv = np.append(self.listv, v)
                     self.geDir = v
 
