@@ -29,7 +29,7 @@ class GlobalEvent :
         self.mainPts = np.array([], dtype=Point)
         self.pts = np.array([], dtype=Point)
         self.leDir:Point = None
-        self.geDir:Point = None
+        self.geDir:Point = Point(0,0)
         self.listA = np.array([], dtype=Point) 
         self.listB = np.array([], dtype=Point)
         self.listC = np.array([], dtype=Point)
@@ -48,14 +48,14 @@ class GlobalEvent :
         addLeDecision = True
 
         # First LE's position become a main point .
-        if self.pts.size == 0 :
+        if len(self.pts) == 0 :
             self.mainPts = np.append(self.mainPts, center)
             self.geGoodPoint += 1
             self.ptsValidity = np.append(self.ptsValidity, True)
 
         # If the current LE is at least the second .
-        elif self.pts.size > 0:
-            if self.listv.size > 1 :
+        elif len(self.pts) > 0:
+            if len(self.listv) > 1 :
                 scalar = le.getLeDir().x * self.listv[-1].x + le.getLeDir().y * self.listv[-1].y
                 self.leDir = le.getLeDir()
                 if scalar <= 0.0 :
@@ -63,9 +63,9 @@ class GlobalEvent :
                 else :
                     self.clusterNegPos = np.append(self.clusterNegPos, True)
             # Check global event direction each 3 LEs .
-            if (self.pts.size +1)%3 == 0 :
+            if (len(self.pts) +1)%3 == 0 :
                 # If there is at least 2 main points .
-                if self.mainPts.size >=2 :
+                if len(self.mainPts) >=2 :
                     # Get the first main point .
                     A = self.mainPts[0]
                     self.listA = np.append(self.listA, A)
@@ -100,11 +100,11 @@ class GlobalEvent :
                         # cv2.circle(self.geDirMap, (center.y, center.x), 5, (255, 0, 0), 1, cv2.LINE_AA, 0)
                     else :
                         # Birds filter 
-                        scalar = le.getLeDir().x * v.x + le.getLeDir().y * v.y
-                        if scalar <= 0.0 :
-                            self.clusterNegPos = np.append(self.clusterNegPos, False)
-                        else :
-                            self.clusterNegPos = np.append(self.clusterNegPos, True)
+                        # scalar = le.getLeDir().x * v.x + le.getLeDir().y * v.y
+                        # if scalar <= 0.0 :
+                        #     self.clusterNegPos = np.append(self.clusterNegPos, False)
+                        # else :
+                        #     self.clusterNegPos = np.append(self.clusterNegPos, True)
 
                         # Norm vector u .
                         normU = sqrt(pow(u.x,2) + pow(u.y,2))
@@ -152,7 +152,7 @@ class GlobalEvent :
             for pt in le.mLeRoiList :
                 roi = np.zeros((roiH, roiW, 3), dtype=np.uint8)
                 roi[:,:] = self.geColor
-                self.geMapColor[pt.x-roiH//2:pt.x+roiH//2, pt.y-roiW//2:pt.y+roiW//2] = roi
+                self.geMapColor[pt.x-roiH//2:pt.x+roiH//2, pt.y-roiW//2:pt.y+roiW//2] = roi.copy()
             # Update dirMap .
             self.geDirMap[center.x, center.y] = [0,255,0] 
         else :
@@ -176,8 +176,8 @@ class GlobalEvent :
     def continuousGoodPos(self, n:int, msg:str):
         msg += "continuousGoodPos\n"
         nb, nn = 0, 0
-        msg += "size pts validity : " + str(self.ptsValidity.size) + "\n"
-        for i in range(0, self.ptsValidity.size):
+        msg += "size pts validity : " + str(len(self.ptsValidity)) + "\n"
+        for i in range(0, len(self.ptsValidity)):
             if self.ptsValidity[i] :
                 nb += 1
                 nn = 0
@@ -194,7 +194,7 @@ class GlobalEvent :
 
     def continuousBadPos(self, n:int):
         nb, nn = 0, 0
-        for i in range(0, self.ptsValidity.size):
+        for i in range(0, len(self.ptsValidity)):
             if not self.ptsValidity[i] :
                 nb += 1
                 nn = 0
@@ -212,13 +212,13 @@ class GlobalEvent :
         msg += "negPosClusterFilter\n"
         counter = 0
         msg += "clusterNegPos size = "+ str(self.clusterNegPos.size)+"\n"
-        for i in range(0, self.clusterNegPos.size):
+        for i in range(0, len(self.clusterNegPos)):
             if self.clusterNegPos[i]:
                 msg += "clusterNegPos true\n"
                 counter += 1
             else :
                 msg += "clusterNegPos false\n"
-        if counter >= float(self.clusterNegPos.size)/2.0 and counter != 0 :
+        if counter >= float(len(self.clusterNegPos))/2.0 and counter != 0 :
             msg += "negPosClusterFilter = OK"
             return (True, msg)
         else:
