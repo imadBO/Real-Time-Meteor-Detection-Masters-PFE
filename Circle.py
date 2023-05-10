@@ -5,10 +5,8 @@ from Types import *
 
 class Circle:
     def __init__(self, center:Point, radius:int):
-        self.center = center
-        self.radius = radius
-        self.mPos = Point(0,0)
-        self.mRadius = 0
+        self.mPos = center
+        self.mRadius = radius
     
     def getCenter(self):
         return self.mPos
@@ -25,8 +23,8 @@ class Circle:
         intersectedSurface = 0.0
 
         if enableDebug :
-            cv2.circle(imgMap, (int(self.mPos.x), int(self.mPos.y)), int(self.mRadius), (0, 255, 0), thickness=2)
-            cv2.circle(imgMap, (int(circle.getCenter().x), int(circle.getCenter().y)), int(circle.getRadius()), (0, 0, 255), thickness=2)
+            cv2.circle(imgMap, (int(self.mPos.y), int(self.mPos.x)), int(self.mRadius), (0, 255, 0), thickness=2)
+            cv2.circle(imgMap, (int(circle.getCenter().y), int(circle.getCenter().x)), int(circle.getRadius()), (0, 0, 255), thickness=2)
 
         # Compute the distance between two circle centers .
         circleCentersDist = sqrt(pow(self.mPos.x - circle.getCenter().x, 2) + pow(self.mPos.y - circle.getCenter().y, 2))
@@ -72,7 +70,7 @@ class Circle:
                     resY2 = N - resX2 * ((x0-x1)/(y0-y1))
 
                     if enableDebug:
-                        cv2.line(imgMap, (resX1,resY1), (resX2,resY2), (255, 255, 255), 1, cv2.LINE_AA)
+                        cv2.line(imgMap, (int(resX1),int(resY1)), (int(resX2),int(resY2)), (255, 255, 255), 1, cv2.LINE_AA)
 
                     # Circle1 more inside the other .
                     if circleCentersDist > abs(circle.getRadius() - self.mRadius) and circleCentersDist < circle.getRadius() and circle.getRadius() > self.mRadius:
@@ -105,7 +103,7 @@ class Circle:
                         areaNegCircle = (pow(R1,2)/2) * (thetaNegCircle - sin(thetaNegCircle))
                         intersectedSurface = surfaceCircle2 - areaNegCircle + areaPosCircle
                         displayIntersectedSurface = True
-                    elif circleCentersDist == circle.getRadius() or circleCentersDist == self.mRadius():
+                    elif circleCentersDist == circle.getRadius() or circleCentersDist == self.mRadius:
                         # print("Outskirt")
                         pass
                     else:
@@ -136,7 +134,7 @@ class Circle:
                     resX2 = (pow(R1,2) - pow(R0,2) - pow(x1,2) + pow(x0,2) - pow(y1,2) + pow(y0,2))/(2*(x0-x1))
 
                     if enableDebug:
-                        cv2.line(imgMap, (resX1, resY1), (resX2, resY2), (255, 255, 255), 1, cv2.LINE_AA)
+                        cv2.line(imgMap, (int(resX1), int(resY1)), (int(resX2), int(resY2)), (255, 255, 255), 1, cv2.LINE_AA)
 
                     # Circle neg more inside the other .
                     if circleCentersDist > abs(circle.getRadius()-self.mRadius and circleCentersDist < circle.getRadius() and circle.getRadius() > self.mRadius):
@@ -185,11 +183,11 @@ class Circle:
                     res = True
 
         if enableDebug and displayIntersectedSurface:
-            cv2.putText(imgMap, "Intersected surface : ", (15,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.CV_AA)
+            cv2.putText(imgMap, "Intersected surface : ", (15,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
             msg1 = "- Green circle : " + str((intersectedSurface * 100) / surfaceCircle1) + "%"
-            cv2.putText(imgMap, msg1, (15,30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.CV_AA)
+            cv2.putText(imgMap, msg1, (15,30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
             msg2 = "- Red circle : " + str((intersectedSurface * 100) / surfaceCircle2) + "%"
-            cv2.putText(imgMap, msg2, (15,45), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.CV_AA)
+            cv2.putText(imgMap, msg2, (15,45), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
 
         if enableDebug:
             cv2.imwrite(debugPath+'savedimage.jpeg', imgMap)  

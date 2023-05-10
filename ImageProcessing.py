@@ -128,9 +128,9 @@ def thresholding(img, mask, factor, threshType):
 
     # Calculate the value of the threshold based on mean or stdev and a factor .
     if threshType == 'MEAN':
-        threshold = np.mean(mean) * factor
+        threshold = np.mean(mean) * factor + 10
     elif threshType == 'STDEV':
-        threshold = np.mean(stddev) * factor
+        threshold = np.mean(stddev) * factor + 10
 
     if img.dtype == np.uint16:
         if threshold == 0:
