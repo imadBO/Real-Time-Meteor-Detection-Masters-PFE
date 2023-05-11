@@ -777,7 +777,7 @@ class TemporalDetection:
                                     le.addNeg(whitePixNegDiff)
 
                                     # Add the current roi .
-                                    le.mLeRoiList = np.append(le.mLeRoiList, Point(x=subdivisionPos.x + i, y= subdivisionPos.y + j))
+                                    le.mLeRoiList.append(Point(x=subdivisionPos.x + i, y= subdivisionPos.y + j))
                                     # Set the Local event's map .
                                     le.setMap(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2, y= subdivisionPos.y + j - self.mRoiSize[1]//2), self.mRoiSize)
                                     # Update center of mass .
