@@ -25,16 +25,16 @@ class LocalEvent:
         self.index = 0
 
         # should be public .
-        self.mLeRoiList = np.array([], dtype=Point)    # Contains position of regions of interest which composes a local event .
-        self.mAbsPos = np.array([], dtype=Point)
-        self.mPosPos = np.array([], dtype=Point)
-        self.mNegPos = np.array([], dtype=Point)
+        self.mLeRoiList = []    # Contains position of regions of interest which composes a local event .
+        self.mAbsPos = []
+        self.mPosPos = []
+        self.mNegPos = []
         self.mFrameHeight = frameHeight
         self.mFrameWidth = frameWidth
         self.mFrameAcqDate = None
 
         # Save position of the first ROI .
-        self.mLeRoiList = np.append(self.mLeRoiList, roiPos)
+        self.mLeRoiList.append(roiPos)
 
         # Add the first ROI to the LE map .
         self.roi = np.full((roiSize[0], roiSize[1]), 255, dtype=np.uint8)
@@ -58,15 +58,15 @@ class LocalEvent:
         self.mLeMap[x:x+roiSize[0], y:y+roiSize[1]]
 
     def addAbs(self, points):
-        self.mAbsPos = np.append(self.mAbsPos, points)
+        self.mAbsPos = self.mAbsPos + points
 
     def addPos(self, points):
-        self.mPosPos = np.append(self.mPosPos, points)
+        self.mPosPos = self.mPosPos + points
         if len(self.mPosPos) != 0 :
             self.mPosCluster = True
 
     def addNeg(self, points):
-        self.mNegPos = np.append(self.mNegPos, points)
+        self.mNegPos = self.mNegPos + points
         if len(self.mNegPos) != 0 :
             self.mNegCluster = True
 
@@ -167,11 +167,11 @@ class LocalEvent:
 
     def mergeWithAnotherLE(self, LE:"LocalEvent"):
         print("merging")
-        self.mLeRoiList = np.append(self.mLeRoiList, LE.mLeRoiList)
+        self.mLeRoiList = self.mLeRoiList + LE.mLeRoiList
         self.completeGapWithRoi(self.mLeMassCenter, LE.getMassCenter())
-        self.mAbsPos = np.append(self.mAbsPos, LE.mAbsPos)
-        self.mPosPos = np.append(self.mPosPos, LE.mPosPos)
-        self.mNegPos = np.append(self.mNegPos, LE.mNegPos)
+        self.mAbsPos = self.mAbsPos + LE.mAbsPos
+        self.mPosPos = self.mPosPos + LE.mPosPos
+        self.mNegPos = self.mNegPos + LE.mNegPos
         self.computeMassCenter()
         temp = self.mLeMap + LE.getMap()
         self.mLeMap = temp.copy()
