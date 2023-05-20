@@ -11,44 +11,40 @@ from Frame import *
 from datetime import datetime
 
 def playVideo(dataQueue):
-    # Create a VideoCapture object and read from input file
-    cap = cv2.VideoCapture('meteor1.avi')
-    
-    # Check if camera opened successfully
-    if (cap.isOpened()== False):
+    cap = cv2.VideoCapture('PFE/meteor1.avi')
+
+    if not cap.isOpened():
         print("Error opening video file")
-    # Read until video is completed
-    while(cap.isOpened()):
-        
-    # Capture frame-by-frame
+
+    while cap.isOpened():
         ret, frame = cap.read()
-        if ret == True:
-        # Display the resulting frame
+        if ret:
             frameDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
             cframe = Frame(frame, 0, 0, frameDate)
             dataQueue.put(cframe)
-            cv2.imshow('Frame', frame) 
-        # Press Q on keyboard to exit
+            cv2.imshow('Frame', frame)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
-    
-    # Break the loop
         else:
             break
-    
-    # When everything done, release
-    # the video capture object
+
     cap.release()
-    
-    # Closes all the frames
     cv2.destroyAllWindows()
 
 def startDetection(dataQueue):
-    det = TemporalDetection(dtp= detectionParam(), fmt= CamPixFmt.MONO8)
-    if dataQueue.empty() :
-        time.sleep(1)
-    while not dataQueue.empty() :
-        det.runDetection(cframe=dataQueue.get())
+    det = TemporalDetection(dtp=detectionParam(), fmt=CamPixFmt.MONO8)
+    lastTime = time.perf_counter()
+    while True:
+        if dataQueue.empty():
+            time.sleep(0.1)
+            if time.perf_counter() - lastTime > 5 :
+                break
+            else :
+                continue
+        lastTime = time.perf_counter()
+        # try :
+        cframe = dataQueue.get(block=False)
+        det.runDetection(cframe=cframe)
 
 if __name__ == "__main__" :
     dataQueue = Queue()

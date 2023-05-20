@@ -184,9 +184,9 @@ class Circle:
 
         if enableDebug and displayIntersectedSurface:
             cv2.putText(imgMap, "Intersected surface : ", (15,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
-            msg1 = "- Green circle : " + str((intersectedSurface * 100) / surfaceCircle1) + "%"
+            msg1 = "".join(["- Green circle : " , str((intersectedSurface * 100) / surfaceCircle1) , "%"])
             cv2.putText(imgMap, msg1, (15,30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
-            msg2 = "- Red circle : " + str((intersectedSurface * 100) / surfaceCircle2) + "%"
+            msg2 = "".join(["- Red circle : " , str((intersectedSurface * 100) / surfaceCircle2) , "%"])
             cv2.putText(imgMap, msg2, (15,45), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
 
         if enableDebug:

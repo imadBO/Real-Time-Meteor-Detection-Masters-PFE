@@ -42,21 +42,21 @@ class LocalEvent:
         self.mLeMap[x - roiSize[0] // 2:x + roiSize[0] // 2, y - roiSize[1] // 2:y + roiSize[1] // 2] = self.roi
 
     def computeMassCenter(self):
-        x, y = 0.0, 0.0
-        for point in self.mAbsPos :
-            x += point.x
-            y += point.y
-        x = x // len(self.mAbsPos)
-        y = y // len(self.mAbsPos)
-
-        self.mLeMassCenter = Point(x=int(x),y=int(y))
+        total_x = sum(point.x for point in self.mAbsPos)
+        total_y = sum(point.y for point in self.mAbsPos)
+        length = len(self.mAbsPos)
+        if length == 0:
+            self.mLeMassCenter = Point(0, 0)
+        else:
+            self.mLeMassCenter = Point(int(total_x / length), int(total_y / length))
 
     def setMap(self, roiPos:Point, roiSize):
         # Add the first ROI to the LE map .
-        self.roi = np.full((roiSize[0], roiSize[1]), 255, dtype=np.uint8)
+        roiH, roiW = roiSize[0], roiSize[1]
+        self.roi = np.full((roiH, roiW), 255, dtype=np.uint8)
         x, y = roiPos.x, roiPos.y
-        self.mLeMap[x:x+roiSize[0], y:y+roiSize[1]]
-
+        self.mLeMap[x:x+roiH, y:y+roiW]
+    
     def addAbs(self, points):
         self.mAbsPos = self.mAbsPos + points
 
@@ -76,15 +76,15 @@ class LocalEvent:
         for absPoint in self.mAbsPos :
             # Set the RGB channels into a balck color .
             mapy[absPoint.x,absPoint.y] = np.array([255,255,255])
-        
-        if len(self.mPosPos) != 0 :
+        lengthPosPos = len(self.mPosPos)
+        if lengthPosPos != 0 :
             xPos, yPos = 0.0, 0.0
             for posPoint in self.mPosPos :
                 mapy[posPoint.x, posPoint.y] = np.array([0,255,0])
                 xPos += posPoint.x
                 yPos += posPoint.y
-            xPos = xPos // len(self.mPosPos)
-            yPos = yPos // len(self.mPosPos)
+            xPos = xPos // lengthPosPos
+            yPos = yPos // lengthPosPos
 
             self.mPosMassCenter = Point(x=int(xPos), y=int(yPos))
 
@@ -97,8 +97,8 @@ class LocalEvent:
             if self.mPosMassCenter.x > 0 and self.mPosMassCenter.y > 0 :
                 # Draw a green circle on the image around the mass center with the calculated radius.
                 cv2.circle(mapy, (int(self.mPosMassCenter.x), int(self.mPosMassCenter.y)), int(posRadius), (0, 255, 0), thickness=-1)
-        
-        if len(self.mNegPos) != 0 :
+        lengthNegPos = len(self.mNegPos)
+        if lengthNegPos != 0 :
             xNeg, yNeg = 0.0, 0.0
             for negPoint in self.mNegPos :
                 if mapy[negPoint.x, negPoint.y] == [0,255,0]:
@@ -108,8 +108,8 @@ class LocalEvent:
 
                 xNeg += negPoint.x
                 yNeg += negPoint.y
-            xNeg = xNeg // len(self.mNegPos)
-            yNeg = yNeg // len(self.mNegPos)
+            xNeg = xNeg // lengthNegPos
+            yNeg = yNeg // lengthNegPos
 
             self.mNegMassCenter = Point(x=int(xNeg), y=int(yNeg))
 
@@ -194,22 +194,22 @@ class LocalEvent:
                     self.mLeMap[p.x-5:p.x+5, p.y-5:p.y+5] = roi.copy()
 
     def computePosMassCenter(self):
-        xPos, yPos = 0.0, 0.0
-        for point in self.mPosPos :
-            xPos += point.x
-            yPos += point.y
-        xPos = xPos // len(self.mPosPos)
-        yPos = yPos // len(self.mPosPos)
-        self.mPosMassCenter = Point(x=int(xPos), y=int(yPos))
+        total_x = sum(point.x for point in self.mPosPos)
+        total_y = sum(point.y for point in self.mPosPos)
+        length = len(self.mPosPos)
+        if length == 0:
+            self.mPosMassCenter = Point(0, 0)
+        else:
+            self.mPosMassCenter = Point(int(total_x / length), int(total_y / length))
 
     def computeNegMassCenter(self):
-        xNeg, yNeg = 0.0, 0.0
-        for point in self.mNegPos :
-            xNeg += point.x
-            yNeg += point.y
-        xNeg = xNeg // len(self.mNegPos)
-        yNeg = yNeg // len(self.mNegPos)
-        self.mNegMassCenter = Point(x=int(xNeg), y=int(yNeg))
+        total_x = sum(point.x for point in self.mNegPos)
+        total_y = sum(point.y for point in self.mNegPos)
+        length = len(self.mNegPos)
+        if length == 0:
+            self.mNegMassCenter = Point(0, 0)
+        else:
+            self.mNegMassCenter = Point(int(total_x / length), int(total_y / length))
     
     def computePosRadius(self):
         # Search for radius .
