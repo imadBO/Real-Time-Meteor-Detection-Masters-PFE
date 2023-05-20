@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from Types import Point
+
 def correctGammaOnMono8(img, gamma):
     """
     Gamma correction is a non-linear operation that adjusts the intensity values of an image to correct
@@ -9,14 +10,8 @@ def correctGammaOnMono8(img, gamma):
     and is given by:
     Corrected_Value = (Original_Value / 255.0) ^ (1 / gamma) * 255.0
     """
-    gamma_inverse = 1.0 / gamma
-
-    lut_matrix = np.zeros((1, 256), dtype=np.uint8)
-    for i in range(256):
-        lut_matrix[0, i] = int((i / 255.0) ** gamma_inverse * 255.0)
-
+    lut_matrix = np.array((np.arange(256) / 255.0) ** (1 / gamma) * 255.0, dtype=np.uint8)
     result = cv2.LUT(img, lut_matrix)
-
     return result
 
 def correctGammaOnMono12(img, gamma):
@@ -25,16 +20,10 @@ def correctGammaOnMono12(img, gamma):
     for the non-linear response of displays or sensors. It is commonly used to correct the brightness or 
     contrast of an image. The gamma correction formula is typically applied to each pixel value in the image
     and is given by:
-    Corrected_Value = (Original_Value / 255.0) ^ (1 / gamma) * 255.0
+    Corrected_Value = (Original_Value / 4095.0) ^ (1 / gamma) * 4095.0
     """
     gamma_inverse = 1.0 / gamma
-
-    result = np.zeros_like(img, dtype=np.uint16)
-
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            result[i, j] = int((img[i, j] / 4095.0) ** gamma_inverse * 4095.0)
-
+    result = ((img / 4095.0) ** gamma_inverse * 4095.0).astype(np.uint16)
     return result
 
 def subdivideFrame(n, imgH, imgW):
@@ -70,7 +59,7 @@ def subdivideFrame(n, imgH, imgW):
                    # 3 down
                    # 4 left
 
-    for i in range(1, n * n):
+    for _ in range(1, n * n):
 
         if direction == 1:
 
@@ -112,45 +101,26 @@ def subdivideFrame(n, imgH, imgW):
 
     return np.array(sub)
 
+
 def thresholding(img, mask, factor, threshType):
     """
     This function performs thresholding on a frame (img) based on a given mask (mask) and thresholding factor (factor) 
     using a specified thresholding method (threshType: mean or stdev)
     """
 
-    thresholdedMap = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-    # Compute the mean and stdev of the frame, and use the optional mask to only consider 
-    # the pixels that are non-zero in the mask .
     mean, stddev = cv2.meanStdDev(img, mask=mask)
-    # print(mean, stddev)
-    # Initializes the threshold value to 0.
     threshold = 0
 
-    # Calculate the value of the threshold based on mean or stdev and a factor .
     if threshType == 'MEAN':
         threshold = np.mean(mean) * factor + 10
     elif threshType == 'STDEV':
         threshold = np.mean(stddev) * factor + 10
 
-    if img.dtype == np.uint16:
-        if threshold == 0:
-            threshold = 65535
-
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                if np.mean(img[i, j]) > threshold:
-                    thresholdedMap[i, j] = 255
-
-    elif img.dtype == np.uint8:
-        if threshold == 0:
-            threshold = 255
-
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                if np.mean(img[i, j]) > threshold:
-                    thresholdedMap[i, j] = 255
+    thresholdedMap = np.mean(img, axis=2) > threshold
+    thresholdedMap = thresholdedMap.astype(np.uint8) * 255
 
     return thresholdedMap
+
 
 def buildSaturatedMap(img, maxval):
     """
@@ -158,19 +128,11 @@ def buildSaturatedMap(img, maxval):
     If a pixel value is greater than or equal to maxval, the corresponding pixel value 
     in the saturatedMap is set to 255, indicating a saturated pixel.
     """
-    saturated_map = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-    
-
-    if img.dtype == np.uint16:
-
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                if np.mean(img[i,j]) >= maxval:
-                    saturated_map[i,j] = 255
-    elif img.dtype == np.uint8:
-
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                if np.mean(img[i,j]) >= maxval:
-                    saturated_map[i,j] = 255
+    # create saturated_map with the same shape and dtype as img .
+    saturated_map = np.zeros_like(img, dtype=np.uint8)
+    # We calculate the mean of each pixel using np.mean(img, axis=2). By specifying axis=2, we compute the mean across the color channels, resulting in a 2D array with shape (img.shape[0], img.shape[1]).
+    # We create a boolean mask saturated_pixels indicating which pixels are saturated by comparing the mean values to maxval.
+    saturated_pixels = np.mean(img, axis=2) >= maxval
+    # We assign the value 255 to the saturated pixels in saturated_map using boolean indexing saturated_map[saturated_pixels] = 255
+    saturated_map[saturated_pixels] = 255
     return saturated_map

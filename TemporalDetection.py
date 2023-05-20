@@ -23,13 +23,6 @@ import time
 
 
 class TemporalDetection:
-
-    logger = logging.getLogger("DetectionTemporal")
-    logger.setLevel(logging.DEBUG)
-
-    class Init:
-        def __init__(self):
-            TemporalDetection.logger.addFilter(logging.Filter(name="ClassName", record=None))
             
     def __init__(self, dtp:detectionParam, fmt:CamPixFmt):
         self.mListGlobalEvents = [] # List of global events (Events spread on several frames) .    
@@ -50,27 +43,8 @@ class TemporalDetection:
         self.debugFiles = np.array([], dtype=str)
         self.mdtp = dtp
         self.mVideoDebugAutoMask = None
-
-        self.mListColors.append([139, 0, 0])       # DarkRed
-        self.mListColors.append([255, 0, 0])       # Red
-        self.mListColors.append([100, 100, 0])     # IndianRed
-        self.mListColors.append([205, 92, 92])     # Salmon
-        self.mListColors.append([255, 140, 0])     # DarkOrange
-        self.mListColors.append([210, 105, 30])    # Chocolate
-        self.mListColors.append([255, 255, 0])     # Yellow
-        self.mListColors.append([240, 230, 140])   # Khaki
-        self.mListColors.append([255, 255, 224])   # LightYellow
-        self.mListColors.append([148, 0, 211])     # DarkViolet
-        self.mListColors.append([255, 20, 147])    # DeepPink
-        self.mListColors.append([255, 0, 255])     # Magenta
-        self.mListColors.append([0, 100, 0])       # DarkGreen
-        self.mListColors.append([128, 128, 0])     # Olive
-        self.mListColors.append([0, 255, 0])       # Lime
-        self.mListColors.append([127, 255, 212])   # Aquamarine
-        self.mListColors.append([64, 224, 208])    # Turquoise
-        self.mListColors.append([0, 0, 205])       # Blue
-        self.mListColors.append([0, 191, 255])     # DeepSkyBlue
-        self.mListColors.append([0, 255, 255])     # Cyan
+        self.mListColors = [[139, 0, 0], [255, 0, 0],[100, 100, 0], [205, 92, 92], [255, 140, 0], [210, 105, 30], [255, 255, 0], [240, 230, 140], [255, 255, 224], [148, 0, 211], [255, 20, 147], [255, 0, 255], [0, 100, 0], [128, 128, 0], [0, 255, 0], [127, 255, 212], [64, 224, 208], [0, 0, 205], [0, 191, 255], [0, 255, 255]]
+        # DarkRed, Red, IndianRed, Salmon, DarkOrange, Chocolate, Yellow, Khaki, LightYellow, DarkViolet, DeepPink, Magenta, DarkGreen, Olive, Lime, Aquamarine, Turquoise, BlueDeepSkyBlue, Cyan
 
         # Create local mask to eliminate single white pixels .
         maskTemp = np.full((3, 3), 255, dtype=np.uint8) # create a 3x3 array filled with 255 .
@@ -145,6 +119,7 @@ class TemporalDetection:
                 #---------------------------------#
                 if self.mPrevFrame.all() == None :
                     self.mPrevFrame = currImg.copy()
+                    Frame.mFrameNumber += 1
                     return (currImg, False)
                 
                 #---------------------------------#
@@ -153,20 +128,17 @@ class TemporalDetection:
                 absDiffImg, posDiffImg, negDiffImg = np.zeros(currImg.shape), np.zeros(currImg.shape), np.zeros(currImg.shape)
                 # Absolute difference .
                 tAbsDiff = time.perf_counter()
-                # cv2.absdiff(currImg, self.mPrevFrame, absDiffImg)
                 absDiffImg = cv2.absdiff(currImg, self.mPrevFrame)
                 tAbsDiff = time.perf_counter() - tAbsDiff
 
                 # Positive difference .
                 tPosDiff = time.perf_counter()
-                # cv2.subtract(currImg, self.mPrevFrame, posDiffImg, self.mMaskManager.mCurrentMask)
                 posDiffImg = cv2.subtract(currImg, self.mPrevFrame, mask= self.mMaskManager.mCurrentMask)
                 
                 tPosDiff = time.perf_counter() - tPosDiff
 
                 # Negative difference .
                 tNegDiff = time.perf_counter()
-                # cv2.subtract(self.mPrevFrame, currImg, negDiffImg, self.mMaskManager.mCurrentMask)
                 negDiffImg = cv2.subtract(self.mPrevFrame, currImg, mask=self.mMaskManager.mCurrentMask)
                 tNegDiff = time.perf_counter() - tNegDiff
 
@@ -174,7 +146,6 @@ class TemporalDetection:
                 tDilate = time.perf_counter()
                 dilationSize = 2 
                 structElt = cv2.getStructuringElement(cv2.MORPH_RECT, (2*dilationSize + 1, 2*dilationSize + 1 ), (dilationSize, dilationSize))
-                # cv2.dilate(absDiffImg, structElt,absDiffImg)
                 absDiffImg = cv2.dilate(absDiffImg, structElt)
                 tDilate = time.perf_counter() - tDilate
 
@@ -197,16 +168,17 @@ class TemporalDetection:
                 if self.mdtp.DET_DEBUG :
                     posBinaryMap = thresholding(posDiffImg,self.mMaskManager.mCurrentMask, 5, "STDEV")
                     negBinaryMap = thresholding(negDiffImg,self.mMaskManager.mCurrentMask, 5, "STDEV")
-                    SaveImg.saveJPEG(currImg,self.mDebugCurrentPath + "/original/frame_" + str(Frame.mFrameNumber))  
-                    SaveImg.saveJPEG(posBinaryMap,self.mDebugCurrentPath + "/pos_difference_thresholded/frame_" + str(Frame.mFrameNumber))
-                    SaveImg.saveJPEG(negBinaryMap,self.mDebugCurrentPath + "/neg_difference_thresholded/frame_" + str(Frame.mFrameNumber))
-                    SaveImg.saveJPEG(absDiffBinaryMap,self.mDebugCurrentPath + "/absolute_difference_thresholded/frame_" + str(Frame.mFrameNumber))
-                    SaveImg.saveJPEG(absDiffImg,self.mDebugCurrentPath + "/absolute_difference/frame_" + str(Frame.mFrameNumber))
-                    SaveImg.saveJPEG(posDiffImg,self.mDebugCurrentPath + "/pos_difference/frame_" + str(Frame.mFrameNumber))
-                    SaveImg.saveJPEG(negDiffImg,self.mDebugCurrentPath + "/neg_difference/frame_" + str(Frame.mFrameNumber))  
+                    strFrame = str(Frame.mFrameNumber)
+                    SaveImg.saveJPEG(currImg,"".join([self.mDebugCurrentPath , "/original/frame_" , strFrame]))  
+                    SaveImg.saveJPEG(posBinaryMap,"".join([self.mDebugCurrentPath , "/pos_difference_thresholded/frame_" , strFrame]))
+                    SaveImg.saveJPEG(negBinaryMap,"".join([self.mDebugCurrentPath , "/neg_difference_thresholded/frame_" , strFrame]))
+                    SaveImg.saveJPEG(absDiffBinaryMap,"".join([self.mDebugCurrentPath , "/absolute_difference_thresholded/frame_" , strFrame]))
+                    SaveImg.saveJPEG(absDiffImg,"".join([self.mDebugCurrentPath , "/absolute_difference/frame_" , strFrame]))
+                    SaveImg.saveJPEG(posDiffImg,"".join([self.mDebugCurrentPath , "/pos_difference/frame_" , strFrame]))
+                    SaveImg.saveJPEG(negDiffImg,"".join([self.mDebugCurrentPath , "/neg_difference/frame_" , strFrame]))
                     
                     # cv2.imwrite(f'savedimage{str(Frame.mFrameNumber)}.jpeg', currImg)  
-                    Frame.mFrameNumber += 1
+                    
 
                 # Current frame is stored as the previous frame .
                 self.mPrevFrame = currImg.copy()
@@ -244,15 +216,14 @@ class TemporalDetection:
                     
                     # Check if there is white pixels .
                     if np.count_nonzero(subdivision) > 0 :
-                        debugMsg = ""
-                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg, debugMsg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,posDiffThreshold=posThreshold,negDiff=negDiffImg,negDiffThreshold=negThreshold,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= Frame.mFrameNumber,msg=debugMsg,cFrameDate=cframe.mDate)
+                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,posDiffThreshold=posThreshold,negDiff=negDiffImg,negDiffThreshold=negThreshold,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= Frame.mFrameNumber,cFrameDate=cframe.mDate)
                         
                 
                 for i in range(0, len(listLocalEvents)):
                     listLocalEvents[i].setLeIndex(i)
                 
                 if self.mdtp.DET_DEBUG :
-                    SaveImg.saveJPEG(img= eventMap, name= self.mDebugCurrentPath + "/event_map_initial/frame_" +str(Frame.mFrameNumber))
+                    SaveImg.saveJPEG(img= eventMap, name= "".join([self.mDebugCurrentPath , "/event_map_initial/frame_" ,strFrame]))
 
                 #-----------------------------------------------------------------------------------------------#
                 #                                     Link between LE                                           #
@@ -310,7 +281,7 @@ class TemporalDetection:
                         for j in range(0, len(listLocalEvents[i].mLeRoiList)) :
                             if listLocalEvents[i].mLeRoiList[j].x - 5 > 0 and listLocalEvents[i].mLeRoiList[j].x + 5 < eventMapFiltered.shape[0] and listLocalEvents[i].mLeRoiList[j].y - 5 > 0 and listLocalEvents[i].mLeRoiList[j].y + 5 < eventMapFiltered.shape[1] :
                                 eventMapFiltered[listLocalEvents[i].mLeRoiList[j].x - 5:listLocalEvents[i].mLeRoiList[j].x + 5, listLocalEvents[i].mLeRoiList[j].y - 5:listLocalEvents[i].mLeRoiList[j].y + 5] = roiF.copy()
-                    SaveImg.saveJPEG(eventMapFiltered, self.mDebugCurrentPath + "/event_map_filtered/frame_" + str(Frame.mFrameNumber))
+                    SaveImg.saveJPEG(eventMapFiltered, "".join([self.mDebugCurrentPath , "/event_map_filtered/frame_" , strFrame]))
 
                 tStep2 = time.perf_counter() - tStep2
 
@@ -397,22 +368,18 @@ class TemporalDetection:
                         itGE.setNumLastFrame(Frame.mFrameNumber)
                         itGE.setNewLEStatus(False)
                     
-                    msgGE = ""
 
                     # Case 1 : FINISHED EVENT .
                     if itGE.getAgeLastElem() > 5 :
-                        goodPos, msgGE = itGE.continuousGoodPos(4, msgGE)
-                        ratioFramesDist, msgGE = itGE.ratioFramesDist(msgGE)
-                        negPosFilter, msgGE = itGE.negPosClusterFilter(msgGE)
-                        print(f"1. len : {len(itGE.LEList)}, good : {goodPos}, ratio : {ratioFramesDist}, negPos : {negPosFilter}")
                         # Check if the GE has a linear profil and respected the min duration .
-                        if len(itGE.LEList) >= 5 and goodPos and ratioFramesDist and negPosFilter :
+                        if len(itGE.LEList) >= 5 and itGE.continuousGoodPos(4) and itGE.ratioFramesDist() and itGE.negPosClusterFilter():
+                            print(f"1. len : {len(itGE.LEList)}, good : True, ratio : True, negPos : True")
                             self.mGeToSave = itGE
                             saveSignal = True
 
                             # Save the images of the Global Event .
                             if self.mdtp.DET_DEBUG :
-                                SaveImg.saveJPEG(itGE.getDirMap(),self.mDebugCurrentPath + "/ge_map_final/frame_" + str(Frame.mFrameNumber))
+                                SaveImg.saveJPEG(itGE.getDirMap(),"".join([self.mDebugCurrentPath , "/ge_map_final/frame_" , strFrame]))
                             break
                         else :
                             self.mListGlobalEvents.remove(itGE) # Delete the event .
@@ -425,34 +392,29 @@ class TemporalDetection:
                             maxtime = True
 
                         # Check some characteristics : Too long event ? not linear ?
-                        goodPos, msgGE = itGE.continuousGoodPos(5, msgGE)
-                        if maxtime or (not itGE.getLinearStatus() and not goodPos) or (not itGE.getLinearStatus() and itGE.continuousBadPos(itGE.getAge()//2)) :
+                        if maxtime or (not itGE.getLinearStatus() and not itGE.continuousGoodPos(5)) or (not itGE.getLinearStatus() and itGE.continuousBadPos(itGE.getAge()//2)) :
                             self.mListGlobalEvents.remove(itGE) # Delete the GE .
                             # if maxtime :
-                            #     # do some logger ops .
                         
                         # Let the GE alive .
                         elif cframe.mFrameRemaining < 10 and cframe.mFrameRemaining != 0 :
-                            goodPos, msgGE = itGE.continuousGoodPos(4, msgGE)
-                            ratioFramesDist, msgGE = itGE.ratioFramesDist(msgGE)
-                            negPosFilter, msgGE = itGE.negPosClusterFilter(msgGE)
-                            print(f"2. len : {len(itGE.LEList)}, good : {goodPos}, ratio : {ratioFramesDist}, negPos : {negPosFilter}")
-                            if len(itGE.LEList) >= 5 and goodPos and ratioFramesDist and negPosFilter :
+                            if len(itGE.LEList) >= 5 and itGE.continuousGoodPos(4) and itGE.ratioFramesDist() and itGE.negPosClusterFilter() :
+                                print(f"2. len : {len(itGE.LEList)}, good : True, ratio : True, negPos : True")
                                 self.mGeToSave = itGE
                                 saveSignal = True 
                                 # Save the images of the Global Event .
                                 
                                 if self.mdtp.DET_DEBUG :
-                                    SaveImg.saveJPEG(itGE.getDirMap(),self.mDebugCurrentPath + "/ge_map_final/frame_" + str(Frame.mFrameNumber))
+                                    SaveImg.saveJPEG(itGE.getDirMap(),"".join([self.mDebugCurrentPath , "/ge_map_final/frame_" , strFrame]))
                                 break
                             else :
                                 self.mListGlobalEvents.remove(itGE) # Delete the event .
 
                     if self.mdtp.DET_DEBUG :
-                        SaveImg.saveJPEG(itGE.getDirMap(),self.mDebugCurrentPath + "/ge_map/frame_" + str(Frame.mFrameNumber))
+                        SaveImg.saveJPEG(itGE.getDirMap(),"".join([self.mDebugCurrentPath , "/ge_map/frame_" , strFrame]))
                 tStep4 = time.perf_counter() - tStep4
                 tTotal = time.perf_counter() - tTotal
-
+                Frame.mFrameNumber += 1
                 return np.array(currImg, dtype= np.uint8), saveSignal
 
 
@@ -462,7 +424,7 @@ class TemporalDetection:
                 # Current frame is stored as the previous frame .
                 # Still some mask related ops .
                 self.mPrevFrame = currImg.copy()
-
+            Frame.mFrameNumber += 1
         return np.array(currImg, dtype= np.uint8), False
 
 
@@ -576,63 +538,50 @@ class TemporalDetection:
                 if not path.exists():
                     pathlib.Path.mkdir(path)
 
-    def getColorInEventMap(self, eventMap, roiCenter:Point):
-        # ROI in the eventMap.
+    def getColorInEventMap(self, eventMap, roiCenter: Point):
         roi = eventMap[
-            roiCenter.x - self.mRoiSize[0] // 2 : roiCenter.x + self.mRoiSize[0] // 2,
-            roiCenter.y - self.mRoiSize[1] // 2 : roiCenter.y + self.mRoiSize[1] // 2
+            roiCenter.x - self.mRoiSize[0] // 2: roiCenter.x + self.mRoiSize[0] // 2,
+            roiCenter.y - self.mRoiSize[1] // 2: roiCenter.y + self.mRoiSize[1] // 2
         ].copy()
 
         listColor = []
-        exist = False
+        unique_colors = set()
 
         for i in range(roi.shape[0]):
             for j in range(roi.shape[1]):
                 bgrPixel = roi[i, j]
-                
-                if bgrPixel[0] != 0 or bgrPixel[1] != 0 or bgrPixel[2] != 0:
-                    for k in range(len(listColor)):
-                        if (bgrPixel - listColor[k]).all():
-                            exist = True
-                            break
-                    
-                    if not exist:
-                        listColor.append(bgrPixel)
-                    
-                    exist = False
-        
+
+                if (bgrPixel != 0).any() and tuple(bgrPixel) not in unique_colors:
+                    listColor.append(bgrPixel)
+                    unique_colors.add(tuple(bgrPixel))
+
         return np.array(listColor)
 
-    def colorRoiInBlack(self, p:Point, h, w, region):
+    def colorRoiInBlack(self, p: Point, h, w, region):
         posX = p.x - h
         posY = p.y - w
 
-        if p.x - h < 0:
+        if posX < 0:
             h = p.x + h // 2
             posX = 0
         elif p.x + h // 2 > region.shape[0]:
             h = region.shape[0] - p.x + h // 2
 
-        if p.y - w < 0:
+        if posY < 0:
             w = p.y + w // 2
             posY = 0
         elif p.y + w // 2 > region.shape[1]:
             w = region.shape[1] - p.y + w // 2
-        
-        roiBlackRegion = None
 
-        # Color ROI in black in the current region.
-        if len(region.shape) == 3 :
-            roiBlackRegion = np.zeros((h, w, 3), dtype=np.uint8)
-        else :
-            roiBlackRegion = np.zeros((h, w), dtype=np.uint8)
+        roi_shape = (h, w) if len(region.shape) == 2 else (h, w, 3)
+        roiBlackRegion = np.zeros(roi_shape, dtype=np.uint8)
 
-        region[posX:posX+h, posY:posY+w] = roiBlackRegion
-        
+        region[posX:posX + h, posY:posY + w] = roiBlackRegion
+
         return region
 
     def analyseRegion(self, subdivision, absDiffBinaryMap, eventMap, posDiff, posDiffThreshold, negDiff,
-                      negDiffThreshold, listLE, subdivisionPos, maxNbLE, numFrame, msg, cFrameDate):
+                      negDiffThreshold, listLE, subdivisionPos, maxNbLE, numFrame, cFrameDate):
         situation = 0
         nbCreatedLE = 0
         nbRoiAttachedToLE = 0
@@ -642,172 +591,151 @@ class TemporalDetection:
         roicounter = 0
 
         # Loop pixel's subdivision.
-        for i in range(subdivision.shape[0]):
-            for j in range(subdivision.shape[1]):
+        for i, j in np.ndindex(subdivision.shape):
+            # Pixel is white 
+            if subdivision[i,j] > 0 :
+                xSlice1, xSlice2 = subdivisionPos.x + i - self.mRoiSize[0]//2, subdivisionPos.x + i + self.mRoiSize[0]//2
+                ySlice1, ySlice2 = subdivisionPos.y + j - self.mRoiSize[1]//2, subdivisionPos.y + j + self.mRoiSize[1]//2
+                point = Point(x=subdivisionPos.x + i,y=subdivisionPos.y + j)
                 
-                # Pixel is white 
-                if subdivision[i,j] > 0 :
-                    
-                    # Check if we are not out of frame range when a ROI is defined at the current pixel location .
-                    if (subdivisionPos.y + j - self.mRoiSize[1]//2 > 0) and (subdivisionPos.y + j + self.mRoiSize[1]//2 < absDiffBinaryMap.shape[1]) and (subdivisionPos.x + i - self.mRoiSize[0]//2 > 0) and (subdivisionPos.x + i + self.mRoiSize[0]//2 < absDiffBinaryMap.shape[0]):
-                        msg = msg + "Analyse ROI (" + str(subdivisionPos.x + i) + ";" + str(subdivisionPos.y + j) + ")\n"
-                        nbROI += 1
-                        roicounter += 1
-                        # Get Colors in eventMap at the current ROI location .
-                        listColorInRoi = self.getColorInEventMap(eventMap, Point(subdivisionPos.x + i, subdivisionPos.y + j))
-                        if len(listColorInRoi) == 0:
-                            situation = 0  # black color = create a new local event
-                        elif len(listColorInRoi) == 1:
-                            situation = 1  # one color = add the current roi to an existing local event
-                        else:
-                            situation = 2  # several colors = make a decision
+                # Check if we are not out of frame range when a ROI is defined at the current pixel location .
+                if (ySlice1 > 0) and (ySlice2 < absDiffBinaryMap.shape[1]) and (xSlice1 > 0) and (xSlice2 < absDiffBinaryMap.shape[0]):
+                    nbROI += 1
+                    roicounter += 1
+                    # Get Colors in eventMap at the current ROI location .
+                    listColorInRoi = self.getColorInEventMap(eventMap, point)
+                    if len(listColorInRoi) == 0:
+                        situation = 0  # black color = create a new local event
+                    elif len(listColorInRoi) == 1:
+                        situation = 1  # one color = add the current roi to an existing local event
+                    else:
+                        situation = 2  # several colors = make a decision
 
 
-                        if situation == 0 :
+                    if situation == 0 :
 
-                            if len(listLE) < maxNbLE :
-                                msg = msg + "->CREATE New Local EVENT\n" \
-                                    + "  - Initial position : (" \
-                                    + str(subdivisionPos.x + i) + ";" + str(subdivisionPos.y + j) + ")\n" \
-                                    + "  - Color : (" + str(self.mListColors[len(listLE)][0]) + ";" \
-                                    + str(self.mListColors[len(listLE)][1]) + ";" \
-                                    + str(self.mListColors[len(listLE)][2]) + ")\n"
-                                
-                                # Create new localEvent object .
-                                newLocalEvent = LocalEvent(color=self.mListColors[len(listLE)], roiPos=Point(x=subdivisionPos.x+i, y=subdivisionPos.y+j), frameHeight=absDiffBinaryMap.shape[0], frameWidth=absDiffBinaryMap.shape[1], roiSize=self.mRoiSize)
+                        if len(listLE) < maxNbLE :
+                            # Create new localEvent object .
+                            newLocalEvent = LocalEvent(color=self.mListColors[len(listLE)], roiPos=point, frameHeight=absDiffBinaryMap.shape[0], frameWidth=absDiffBinaryMap.shape[1], roiSize=self.mRoiSize)
+                            # Extract white pixels in ROI .
+                            whitePixAbsDiff, whitePixPosDiff, whitePixNegDiff = [], [], []
+                            roiAbsDiff = absDiffBinaryMap[xSlice1 : xSlice2, ySlice1 : ySlice2].copy()
+                            roiPosDiff = posDiff[xSlice1 : xSlice2,ySlice1 : ySlice2].copy()
+                            roiNegDiff = negDiff[xSlice1 : xSlice2, ySlice1 : ySlice2].copy()
+                            
+                            if roiPosDiff.dtype == np.uint16 and roiNegDiff.dtype == np.uint16 :
+                                for a,b in np.ndindex(roiAbsDiff.shape):
+                                    xCord = xSlice1 + a
+                                    yCord = ySlice1 + b
+
+                                    if roiAbsDiff[a,b] > 0 :
+                                        whitePixAbsDiff.append(Point(x=xCord,y=yCord))
+                                    if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
+                                        whitePixPosDiff.append(Point(x=xCord,y=yCord))
+                                    if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
+                                        whitePixNegDiff.append(Point(x=xCord,y=yCord))
+                            
+                            elif roiPosDiff.dtype == np.uint8 and roiNegDiff.dtype == np.uint8 :
+                                for a,b in np.ndindex(roiAbsDiff.shape):
+                                    xCord = xSlice1 + a
+                                    yCord = ySlice1 + b
+                                    if roiAbsDiff[a,b] > 0 :
+                                        whitePixAbsDiff.append(Point(x=xCord,y=yCord))
+                                    if np.mean(roiPosDiff[a,b]) > posDiffThreshold :
+                                        whitePixPosDiff.append(Point(x=xCord,y=yCord))
+                                    if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
+                                        whitePixNegDiff.append(Point(x=xCord,y=yCord))
+
+                            newLocalEvent.addAbs(whitePixAbsDiff)
+                            newLocalEvent.addPos(whitePixPosDiff)
+                            newLocalEvent.addNeg(whitePixNegDiff)
+
+                            # Update center of mass .
+                            newLocalEvent.computeMassCenter()
+
+                            # Save the frame number where the local event has been created .
+                            newLocalEvent.setNumFrame(numFrame)
+                            # Save acquisition date of the frame .
+                            newLocalEvent.mFrameAcqDate = cFrameDate
+                            # Add the LE in the list of localEvent .
+                            listLE.append(newLocalEvent)
+                            # Update eventMap with the color of the new localEvent .
+                            roi = np.full((self.mRoiSize[0],self.mRoiSize[1],3),self.mListColors[len(listLE)-1],dtype=np.uint8)
+                            eventMap[xSlice1:xSlice2, ySlice1 : ySlice2] = roi.copy()
+                            
+                            # Color the roi in black in the current region .
+                            subdivision = self.colorRoiInBlack(Point(i,j), self.mRoiSize[0], self.mRoiSize[1],subdivision)
+                            absDiffBinaryMap = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],absDiffBinaryMap)
+                            posDiff = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],posDiff)
+                            negDiff = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],negDiff)
+
+                            nbCreatedLE += 1
+                        else :
+                            nbNoCreatedLE += 1
+
+                    elif situation == 1 :
+                        index = 0
+                        for le in listLE :
+                            # Try to find a local event which has the same color .
+                            if (le.getColor() - listColorInRoi[0]).all():
                                 # Extract white pixels in ROI .
                                 whitePixAbsDiff, whitePixPosDiff, whitePixNegDiff = [], [], []
-                                roiAbsDiff = absDiffBinaryMap[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0]//2,
-                                                          subdivisionPos.y + j - self.mRoiSize[1]//2 : subdivisionPos.y + j + self.mRoiSize[1]//2].copy()
-                                roiPosDiff = posDiff[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0]//2,
-                                                          subdivisionPos.y + j - self.mRoiSize[1]//2 : subdivisionPos.y + j + self.mRoiSize[1]//2].copy()
-                                roiNegDiff = negDiff[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0] // 2,
-                                                     subdivisionPos.y + j - self.mRoiSize[1] // 2 : subdivisionPos.y + j + self.mRoiSize[1] // 2].copy()
+                                roiAbsDiff = absDiffBinaryMap[xSlice1: xSlice2,ySlice1 : ySlice2].copy()
+                                roiPosDiff = posDiff[xSlice1:xSlice2, ySlice1:ySlice2].copy()
+                                roiNegDiff = negDiff[xSlice1:xSlice2, ySlice1:ySlice2].copy()
                                 
                                 if roiPosDiff.dtype == np.uint16 and roiNegDiff.dtype == np.uint16 :
-                                    for a in range(roiAbsDiff.shape[0]):
-                                        for b in range(roiAbsDiff.shape[1]):
-                                            if roiAbsDiff[a,b] > 0 :
-                                                whitePixAbsDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
-                                                whitePixPosDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
-                                                whitePixNegDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                
+                                    for a,b in np.ndindex(roiAbsDiff.shape):
+                                        xCord = xSlice1 + a
+                                        yCord = ySlice1 + b
+                                        if roiAbsDiff[a,b] > 0 :
+                                            whitePixAbsDiff.append(Point(x=xCord,y=yCord + b))
+                                        if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
+                                            whitePixPosDiff.append(Point(x=xCord,y=yCord + b))
+                                        if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
+                                            whitePixNegDiff.append(Point(x=xCord,y=yCord + b))
+                            
                                 elif roiPosDiff.dtype == np.uint8 and roiNegDiff.dtype == np.uint8 :
-                                    for a in range(roiAbsDiff.shape[0]):
-                                        for b in range(roiAbsDiff.shape[1]):
-                                            if roiAbsDiff[a,b] > 0 :
-                                                whitePixAbsDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if np.mean(roiPosDiff[a,b]) > posDiffThreshold :
-                                                whitePixPosDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                            if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
-                                                whitePixNegDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
+                                    for a,b in np.ndindex(roiAbsDiff.shape):
+                                        xCord = xSlice1 + a
+                                        yCord = ySlice1 + b
+                                        if roiAbsDiff[a,b].all() > 0 :
+                                            whitePixAbsDiff.append(Point(x=xCord,y=yCord))
+                                        if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
+                                            whitePixPosDiff.append(Point(x=xCord,y=yCord))
+                                        if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
+                                            whitePixNegDiff.append(Point(x=xCord,y=yCord))
 
-                                msg = msg + "Number white pix in abs diff : " + str(len(whitePixAbsDiff)) + "\n"
-                                msg = msg + "Number white pix in pos diff : " + str(len(whitePixPosDiff)) + "\n"
-                                msg = msg + "Number white pix in neg diff : " + str(len(whitePixNegDiff)) + "\n"
-                                newLocalEvent.addAbs(whitePixAbsDiff)
-                                newLocalEvent.addPos(whitePixPosDiff)
-                                newLocalEvent.addNeg(whitePixNegDiff)
+                                le.addAbs(whitePixAbsDiff)
+                                le.addPos(whitePixPosDiff)
+                                le.addNeg(whitePixNegDiff)
 
+                                # Add the current roi .
+                                le.mLeRoiList.append(point)
+                                # Set the Local event's map .
+                                le.setMap(Point(x=xSlice1, y= ySlice1), self.mRoiSize)
                                 # Update center of mass .
-                                newLocalEvent.computeMassCenter()
-                                msg = msg + "  - Center of mass abs pixels : (" + str(newLocalEvent.getMassCenter().x) + ";" + str(newLocalEvent.getMassCenter().y) + ")\n"
-
-                                # Save the frame number where the local event has been created .
-                                newLocalEvent.setNumFrame(numFrame)
-                                # Save acquisition date of the frame .
-                                newLocalEvent.mFrameAcqDate = cFrameDate
-                                # Add the LE in the list of localEvent .
-                                listLE.append(newLocalEvent)
+                                le.computeMassCenter()
                                 # Update eventMap with the color of the new localEvent .
-                                roi = np.full((self.mRoiSize[0],self.mRoiSize[1],3),self.mListColors[len(listLE)-1],dtype=np.uint8)
-                                eventMap[subdivisionPos.x + i - self.mRoiSize[0]//2:subdivisionPos.x + i + self.mRoiSize[0]//2, subdivisionPos.y + j - self.mRoiSize[1] // 2 : subdivisionPos.y + j + self.mRoiSize[1] // 2] = roi.copy()
+                                roi = np.full((self.mRoiSize[0], self.mRoiSize[1], 3),listColorInRoi[0],dtype=np.uint8)
+                                eventMap[xSlice1:xSlice2, ySlice1 : ySlice2] = roi.copy()
+
+                                # Color roi in black in thresholded frame .
+                                roiBlack = np.full((self.mRoiSize[0], self.mRoiSize[1]), 0 ,dtype=np.uint8)
+                                absDiffBinaryMap[xSlice1:xSlice2, ySlice1 : ySlice2] = roiBlack.copy()
                                 # Color the roi in black in the current region .
                                 subdivision = self.colorRoiInBlack(Point(i,j), self.mRoiSize[0], self.mRoiSize[1],subdivision)
-                                absDiffBinaryMap = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],absDiffBinaryMap)
-                                posDiff = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],posDiff)
-                                negDiff = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],negDiff)
+                                absDiffBinaryMap = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],absDiffBinaryMap)
+                                posDiff = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],posDiff)
+                                negDiff = self.colorRoiInBlack(point, self.mRoiSize[0], self.mRoiSize[1],negDiff)
 
-                                nbCreatedLE += 1
-                            else :
-                                nbNoCreatedLE += 1
+                                nbRoiAttachedToLE += 1
+                                break
+                            index += 1
 
-                        elif situation == 1 :
-                            index = 0
-                            for le in listLE :
-                                # Try to find a local event which has the same color .
-                                if (le.getColor() - listColorInRoi[0]).all():
-                                    msg = msg + "->Attach ROI (" + str(subdivisionPos.x + i) + ";" + str(subdivisionPos.y + j) + ") with LE " + str(index) + "\n"
-                                    # Extract white pixels in ROI .
-                                    whitePixAbsDiff, whitePixPosDiff, whitePixNegDiff = [], [], []
-                                    roiAbsDiff = absDiffBinaryMap[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0]//2,
-                                                          subdivisionPos.y + j - self.mRoiSize[1]//2 : subdivisionPos.y + j + self.mRoiSize[1]//2].copy()
-                                    roiPosDiff = posDiff[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0]//2,
-                                                          subdivisionPos.y + j - self.mRoiSize[1]//2 : subdivisionPos.y + j + self.mRoiSize[1]//2].copy()
-                                    roiNegDiff = negDiff[subdivisionPos.x + i - self.mRoiSize[0]//2 : subdivisionPos.x + i + self.mRoiSize[0] // 2,
-                                                     subdivisionPos.y + j - self.mRoiSize[1] // 2 : subdivisionPos.y + j + self.mRoiSize[1] // 2].copy()
-                                    
-                                    if roiPosDiff.dtype == np.uint16 and roiNegDiff.dtype == np.uint16 :
-                                        for a in range(roiAbsDiff.shape[0]):
-                                            for b in range(roiAbsDiff.shape[1]):
-                                                if roiAbsDiff[a,b] > 0 :
-                                                    whitePixAbsDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                                if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
-                                                    whitePixPosDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                                if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
-                                                    whitePixNegDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                
-                                    elif roiPosDiff.dtype == np.uint8 and roiNegDiff.dtype == np.uint8 :
-                                        for a in range(roiAbsDiff.shape[0]):
-                                            for b in range(roiAbsDiff.shape[1]):
-                                                if roiAbsDiff[a,b].all() > 0 :
-                                                    whitePixAbsDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                                if np.mean(roiPosDiff[a,b]) > posDiffThreshold : 
-                                                    whitePixPosDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                                if np.mean(roiNegDiff[a,b]) > negDiffThreshold :
-                                                    whitePixNegDiff.append(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2 + a,y=subdivisionPos.y + j - self.mRoiSize[1]//2 + b))
-                                    msg = msg + "Number white pix in abs diff : " + str(len(whitePixAbsDiff)) + "\n"
-                                    msg = msg + "Number white pix in pos diff : " + str(len(whitePixPosDiff)) + "\n"
-                                    msg = msg + "Number white pix in neg diff : " + str(len(whitePixNegDiff)) + "\n"
-
-                                    le.addAbs(whitePixAbsDiff)
-                                    le.addPos(whitePixPosDiff)
-                                    le.addNeg(whitePixNegDiff)
-
-                                    # Add the current roi .
-                                    le.mLeRoiList.append(Point(x=subdivisionPos.x + i, y= subdivisionPos.y + j))
-                                    # Set the Local event's map .
-                                    le.setMap(Point(x=subdivisionPos.x + i - self.mRoiSize[0]//2, y= subdivisionPos.y + j - self.mRoiSize[1]//2), self.mRoiSize)
-                                    # Update center of mass .
-                                    le.computeMassCenter()
-                                    msg = msg + "  - Update Center of mass abs pixels of LE " + str(index) + " : (" + str(le.getMassCenter().x) + ";" + str(le.getMassCenter().y) + ")\n"
-                                    # Update eventMap with the color of the new localEvent .
-                                    roi = np.full((self.mRoiSize[0], self.mRoiSize[1], 3),listColorInRoi[0],dtype=np.uint8)
-                                    eventMap[subdivisionPos.x + i - self.mRoiSize[0]//2:subdivisionPos.x + i + self.mRoiSize[0]//2, subdivisionPos.y + j - self.mRoiSize[1] // 2 : subdivisionPos.y + j + self.mRoiSize[1] // 2] = roi.copy()
-
-                                    # Color roi in black in thresholded frame .
-                                    # roiBlack = np.full((self.mRoiSize[0], self.mRoiSize[1]), 0 ,dtype=np.uint8)
-                                    # absDiffBinaryMap[subdivisionPos.x + i - self.mRoiSize[0]//2:subdivisionPos.x + i + self.mRoiSize[0]//2, subdivisionPos.y + j - self.mRoiSize[1] // 2 : subdivisionPos.y + j + self.mRoiSize[1] // 2] = roiBlack.copy()
-                                    # Color the roi in black in the current region .
-                                    subdivision = self.colorRoiInBlack(Point(i,j), self.mRoiSize[0], self.mRoiSize[1],subdivision)
-                                    absDiffBinaryMap = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],absDiffBinaryMap)
-                                    posDiff = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],posDiff)
-                                    negDiff = self.colorRoiInBlack(Point(subdivisionPos.x + i,subdivisionPos.y + j), self.mRoiSize[0], self.mRoiSize[1],negDiff)
-
-                                    nbRoiAttachedToLE += 1
-                                    break
-                                index += 1
-
-                        elif situation == 2 :
-                            nbRoiNotAnalysed += 1
-        msg = msg + "--> RESUME REGION ANALYSE : \n" \
-        + "Number of analysed ROI : " + str(nbROI) + "\n" \
-        + "Number of not analysed ROI : " + str(nbRoiNotAnalysed) + "\n" \
-        + "Number of new LE : " + str(nbCreatedLE) + "\n" \
-        + "Number of updated LE :" + str(nbRoiAttachedToLE) + "\n"
-        return listLE, subdivision, eventMap, absDiffBinaryMap, posDiff, negDiff, msg
+                    elif situation == 2 :
+                        nbRoiNotAnalysed += 1
+        return listLE, subdivision, eventMap, absDiffBinaryMap, posDiff, negDiff
 
     def getEventFirstFrameNb(self):
         return self.mGeToSave.geFirstFrameNum
