@@ -39,9 +39,58 @@ class detectionParam:
         self.errormsg = np.array([])
     class DetectionMethod1:
         def __init__(self):
+
             self.DET_SAVE_GEMAP:bool = False
             self.DET_SAVE_DIRMAP:bool = False
             self.DET_SAVE_POS:bool = False
             self.DET_LE_MAX:int = 9 # From 1 to 10 .
             self.DET_GE_MAX:int = 9
             # self.DET_SAVE_GE_INFOS:bool = False
+
+
+##########################################################
+#                 Station parameters                     #
+##########################################################
+class StationParam:
+    def __init__(self):
+        self.STATION_NAME = ""
+        self.TELESCOP = ""
+        self.OBSERVER = ""
+        self.INSTRUME = ""
+        self.CAMERA = ""
+        self.FOCAL = 0.0
+        self.APERTURE = 0.0
+        self.SITELONG = 0.0
+        self.SITELAT = 0.0
+        self.SITEELEV = 0.0
+        self.status = False
+        self.errormsg = []
+
+##########################################################
+#                 Fits Keys parameters                   #
+##########################################################
+class FitskeysParam:
+    def __init__(self):
+        self.FILTER = ""
+        self.K1 = 0.0
+        self.K2 = 0.0
+        self.COMMENT = ""
+        self.CD1_1 = 0.0
+        self.CD1_2 = 0.0
+        self.CD2_1 = 0.0
+        self.CD2_2 = 0.0
+        self.XPIXEL = 0.0
+        self.YPIXEL = 0.0
+        self.status = False
+        self.errormsg = []
+
+##########################################################
+#                 output data parameters                 #
+##########################################################
+class DataParam:
+    def __init__(self):
+        self.DATA_PATH = ""
+        self.FITS_COMPRESSION = False
+        self.FITS_COMPRESSION_METHOD = ""
+        self.status = False
+        self.errormsg = []
