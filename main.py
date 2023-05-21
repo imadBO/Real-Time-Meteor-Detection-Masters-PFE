@@ -35,7 +35,7 @@ def saveEvent(dataQueue,h,w, geToSave):
     writer.release()
 
 def playVideo(dataQueue):
-    cap = cv2.VideoCapture('PFE/4.m4v')
+    cap = cv2.VideoCapture('3.m4v')
 
     if not cap.isOpened():
         print("Error opening video file")
