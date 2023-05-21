@@ -11,7 +11,7 @@ class Frame:
         self.mFormat:CamPixFmt = CamPixFmt.MONO8 # Pixel format
         self.mImg = capImg # Frame's image data
         self.mFileName = "" # Frame's name
-        self.mFrameNumber = 0 # Each frame is identified by a number corresponding to the acquisition order
+        self.frameNumber = 0 # Each frame is identified by a number corresponding to the acquisition order
         self.mFrameRemaining = 0 # Define the number of remaining frames if the input source is a video or a set of single frames
         self.mSaturatedValue = 255 # Max pixel value in the image
         self.mFps = 0.0 # Camera's fps

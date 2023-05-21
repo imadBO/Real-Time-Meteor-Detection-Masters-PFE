@@ -119,8 +119,7 @@ class TemporalDetection:
                 #---------------------------------#
                 if self.mPrevFrame.all() == None :
                     self.mPrevFrame = currImg.copy()
-                    Frame.mFrameNumber += 1
-                    return (currImg, False)
+                    return (currImg, False, self.mGeToSave)
                 
                 #---------------------------------#
                 #           Differences           #
@@ -216,7 +215,7 @@ class TemporalDetection:
                     
                     # Check if there is white pixels .
                     if np.count_nonzero(subdivision) > 0 :
-                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,posDiffThreshold=posThreshold,negDiff=negDiffImg,negDiffThreshold=negThreshold,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= Frame.mFrameNumber,cFrameDate=cframe.mDate)
+                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,posDiffThreshold=posThreshold,negDiff=negDiffImg,negDiffThreshold=negThreshold,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= cframe.frameNumber,cFrameDate=cframe.mDate)
                         
                 
                 for i in range(0, len(listLocalEvents)):
@@ -298,7 +297,7 @@ class TemporalDetection:
                 for leInList in listLocalEvents :
                     itGESelected = 0
                     GESelected = False
-                    leInList.setNumFrame(Frame.mFrameNumber)
+                    leInList.setNumFrame(cframe.frameNumber)
 
                     for j in range(0, len(self.mListGlobalEvents)) :
                         
@@ -375,6 +374,8 @@ class TemporalDetection:
                         if len(itGE.LEList) >= 5 and itGE.continuousGoodPos(4) and itGE.ratioFramesDist() and itGE.negPosClusterFilter():
                             print(f"1. len : {len(itGE.LEList)}, good : True, ratio : True, negPos : True")
                             self.mGeToSave = itGE
+                            self.mGeToSave.geFirstFrameNum = self.mGeToSave.LEList[0].getNumFrame()
+                            self.mGeToSave.geLastFrameNum = self.mGeToSave.LEList[-1].getNumFrame()
                             saveSignal = True
 
                             # Save the images of the Global Event .
@@ -401,6 +402,8 @@ class TemporalDetection:
                             if len(itGE.LEList) >= 5 and itGE.continuousGoodPos(4) and itGE.ratioFramesDist() and itGE.negPosClusterFilter() :
                                 print(f"2. len : {len(itGE.LEList)}, good : True, ratio : True, negPos : True")
                                 self.mGeToSave = itGE
+                                self.mGeToSave.geFirstFrameNum = self.mGeToSave.LEList[0].getNumFrame()
+                                self.mGeToSave.geLastFrameNum = self.mGeToSave.LEList[-1].getNumFrame()
                                 saveSignal = True 
                                 # Save the images of the Global Event .
                                 
@@ -414,8 +417,7 @@ class TemporalDetection:
                         SaveImg.saveJPEG(itGE.getDirMap(),"".join([self.mDebugCurrentPath , "/ge_map/frame_" , strFrame]))
                 tStep4 = time.perf_counter() - tStep4
                 tTotal = time.perf_counter() - tTotal
-                Frame.mFrameNumber += 1
-                return np.array(currImg, dtype= np.uint8), saveSignal
+                return np.array(currImg, dtype= np.uint8), saveSignal, self.mGeToSave
 
 
 
@@ -424,8 +426,7 @@ class TemporalDetection:
                 # Current frame is stored as the previous frame .
                 # Still some mask related ops .
                 self.mPrevFrame = currImg.copy()
-            Frame.mFrameNumber += 1
-        return np.array(currImg, dtype= np.uint8), False
+        return np.array(currImg, dtype= np.uint8), False, self.mGeToSave
 
 
     def saveDetectionInfos(self, p, nbFramesAround):
@@ -501,13 +502,13 @@ class TemporalDetection:
 
     def resetDetection(self, loadNewDataSet):
 
-        self.mListGlobalEvents = np.array([], dtype= GlobalEvent)
+        self.mListGlobalEvents = []
 
         # Clear list of files to send by mail.
         self.debugFiles = np.array([], dtype=str)
         self.mSubdivisionStatus = False
         self.mPrevThresholdedMap = None
-        self.mPrevFrame = None
+        self.mPrevFrame = np.array([None])
 
         if self.mdtp.DET_DEBUG and loadNewDataSet:
             self.mDataSetCounter += 1
