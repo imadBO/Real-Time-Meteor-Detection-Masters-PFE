@@ -53,7 +53,7 @@ class GlobalEvent :
             if len(self.listv) > 1 :
                 scalar = le.getLeDir().x * self.listv[-1].x + le.getLeDir().y * self.listv[-1].y
                 self.leDir = le.getLeDir()
-                if scalar <= 0.0 :
+                if scalar < 0.0 :
                     self.clusterNegPos.append(False)
                 else :
                     self.clusterNegPos.append(True)
@@ -171,7 +171,6 @@ class GlobalEvent :
                     return False
         return False
             
-
     def negPosClusterFilter(self):
         counter = 0
         lengthNegPos = len(self.clusterNegPos)

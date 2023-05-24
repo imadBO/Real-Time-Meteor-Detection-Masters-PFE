@@ -101,7 +101,6 @@ def subdivideFrame(n, imgH, imgW):
 
     return np.array(sub)
 
-
 def thresholding(img, mask, factor, threshType):
     """
     This function performs thresholding on a frame (img) based on a given mask (mask) and thresholding factor (factor) 
@@ -120,7 +119,6 @@ def thresholding(img, mask, factor, threshType):
     thresholdedMap = thresholdedMap.astype(np.uint8) * 255
 
     return thresholdedMap
-
 
 def buildSaturatedMap(img, maxval):
     """

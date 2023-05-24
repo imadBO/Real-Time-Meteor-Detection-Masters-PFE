@@ -65,32 +65,3 @@ class StationParam:
         self.SITEELEV = 0.0
         self.status = False
         self.errormsg = []
-
-##########################################################
-#                 Fits Keys parameters                   #
-##########################################################
-class FitskeysParam:
-    def __init__(self):
-        self.FILTER = ""
-        self.K1 = 0.0
-        self.K2 = 0.0
-        self.COMMENT = ""
-        self.CD1_1 = 0.0
-        self.CD1_2 = 0.0
-        self.CD2_1 = 0.0
-        self.CD2_2 = 0.0
-        self.XPIXEL = 0.0
-        self.YPIXEL = 0.0
-        self.status = False
-        self.errormsg = []
-
-##########################################################
-#                 output data parameters                 #
-##########################################################
-class DataParam:
-    def __init__(self):
-        self.DATA_PATH = ""
-        self.FITS_COMPRESSION = False
-        self.FITS_COMPRESSION_METHOD = ""
-        self.status = False
-        self.errormsg = []
