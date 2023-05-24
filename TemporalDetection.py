@@ -113,6 +113,7 @@ class TemporalDetection:
             # If true is returned, it means that the mask has been updated and applied on currImg. Detection process can't continue .
             # If false is returned, it means that the mask has not been updated. Detection process can continue .
             applied, currImg = self.mMaskManager.applyMask(currFrame=currImg) 
+
             if applied == False :
                 #---------------------------------#
                 #      Check previous frame       #
@@ -133,7 +134,6 @@ class TemporalDetection:
                 # Positive difference .
                 tPosDiff = time.perf_counter()
                 posDiffImg = cv2.subtract(currImg, self.mPrevFrame, mask= self.mMaskManager.mCurrentMask)
-                
                 tPosDiff = time.perf_counter() - tPosDiff
 
                 # Negative difference .
@@ -155,14 +155,6 @@ class TemporalDetection:
                 tThreshold = time.perf_counter()
                 absDiffBinaryMap = thresholding(absDiffImg, self.mMaskManager.mCurrentMask,3, "MEAN")
                 tThreshold = time.perf_counter() - tThreshold
-                
-                # meanPosDiff, stdevPosDiff, meanNegDiff, stdevNegDiff = 0,0,0,0
-                # cv2.meanStdDev(posDiffImg,meanPosDiff,stdevPosDiff, self.mMaskManager.mCurrentMask)
-                meanPosDiff,stdevPosDiff = cv2.meanStdDev(posDiffImg,mask= self.mMaskManager.mCurrentMask)
-                meanNegDiff, stdevNegDiff = cv2.meanStdDev(negDiffImg, mask= self.mMaskManager.mCurrentMask)
-                # cv2.meanStdDev(negDiffImg, meanNegDiff, stdevNegDiff, self.mMaskManager.mCurrentMask)
-                posThreshold = np.mean(stdevPosDiff) * 5 + 10
-                negThreshold = np.mean(stdevNegDiff) * 5 + 10
 
                 if self.mdtp.DET_DEBUG :
                     posBinaryMap = thresholding(posDiffImg,self.mMaskManager.mCurrentMask, 5, "STDEV")
@@ -215,7 +207,7 @@ class TemporalDetection:
                     
                     # Check if there is white pixels .
                     if np.count_nonzero(subdivision) > 0 :
-                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,posDiffThreshold=posThreshold,negDiff=negDiffImg,negDiffThreshold=negThreshold,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= cframe.frameNumber,cFrameDate=cframe.mDate)
+                        listLocalEvents, subdivision, eventMap, absDiffBinaryMap, posDiffImg, negDiffImg = self.analyseRegion(subdivision=subdivision,absDiffBinaryMap=absDiffBinaryMap,eventMap=eventMap,posDiff=posDiffImg,negDiff=negDiffImg,listLE=listLocalEvents,subdivisionPos=subPos,maxNbLE=self.mdtp.temporal.DET_LE_MAX, numFrame= cframe.frameNumber,cFrameDate=cframe.mDate)
                         
                 
                 for i in range(0, len(listLocalEvents)):
@@ -371,8 +363,8 @@ class TemporalDetection:
                     # Case 1 : FINISHED EVENT .
                     if itGE.getAgeLastElem() > 5 :
                         # Check if the GE has a linear profil and respected the min duration .
+                        print(f"1. len : {len(itGE.LEList)}, good : {itGE.continuousGoodPos(4)}, ratio : {itGE.ratioFramesDist()}, negPos : {itGE.negPosClusterFilter()}")
                         if len(itGE.LEList) >= 5 and itGE.continuousGoodPos(4) and itGE.ratioFramesDist() and itGE.negPosClusterFilter():
-                            print(f"1. len : {len(itGE.LEList)}, good : True, ratio : True, negPos : True")
                             self.mGeToSave = itGE
                             self.mGeToSave.geFirstFrameNum = self.mGeToSave.LEList[0].getNumFrame()
                             self.mGeToSave.geLastFrameNum = self.mGeToSave.LEList[-1].getNumFrame()
@@ -386,12 +378,11 @@ class TemporalDetection:
                             self.mListGlobalEvents.remove(itGE) # Delete the event .
                     # Case 2 : NOT FINISHED EVENT .
                     else :
+                        
                         nbsec = TimeDate.secBetweenTwoDates(itGE.getDate(), cframe.mDate)
                         maxtime = False
                         if nbsec > self.mdtp.DET_TIME_MAX :
-                            print("max")
                             maxtime = True
-
                         # Check some characteristics : Too long event ? not linear ?
                         if maxtime or (not itGE.getLinearStatus() and not itGE.continuousGoodPos(5)) or (not itGE.getLinearStatus() and itGE.continuousBadPos(itGE.getAge()//2)) :
                             self.mListGlobalEvents.remove(itGE) # Delete the GE .
@@ -412,7 +403,6 @@ class TemporalDetection:
                                 break
                             else :
                                 self.mListGlobalEvents.remove(itGE) # Delete the event .
-
                     if self.mdtp.DET_DEBUG :
                         SaveImg.saveJPEG(itGE.getDirMap(),"".join([self.mDebugCurrentPath , "/ge_map/frame_" , strFrame]))
                 tStep4 = time.perf_counter() - tStep4
@@ -427,7 +417,6 @@ class TemporalDetection:
                 # Still some mask related ops .
                 self.mPrevFrame = currImg.copy()
         return np.array(currImg, dtype= np.uint8), False, self.mGeToSave
-
 
     def saveDetectionInfos(self, p, nbFramesAround):
 
@@ -532,7 +521,7 @@ class TemporalDetection:
             if not p1.exists():
                 pathlib.Path.mkdir(p1)      
 
-            debugSubDir = ["original", "absolute_difference", "event_map_initial", "event_map_filtered", "absolute_difference_thresholded", "neg_difference_thresholded", "pos_difference_thresholded", "neg_difference", "pos_difference", "ge_map", "ge_map_final"]  
+            debugSubDir = ["original", "absolute_difference", "event_map_initial", "event_map_filtered", "absolute_difference_thresholded", "neg_difference_thresholded", "pos_difference_thresholded", "neg_difference", "pos_difference", "ge_map", "ge_map_final", "events"]  
             for sub_dir in debugSubDir:
                 path = pathlib.Path(self.mDebugCurrentPath + sub_dir)
 
@@ -581,8 +570,7 @@ class TemporalDetection:
 
         return region
 
-    def analyseRegion(self, subdivision, absDiffBinaryMap, eventMap, posDiff, posDiffThreshold, negDiff,
-                      negDiffThreshold, listLE, subdivisionPos, maxNbLE, numFrame, cFrameDate):
+    def analyseRegion(self, subdivision, absDiffBinaryMap, eventMap, posDiff, negDiff, listLE, subdivisionPos, maxNbLE, numFrame, cFrameDate):
         situation = 0
         nbCreatedLE = 0
         nbRoiAttachedToLE = 0
@@ -623,7 +611,12 @@ class TemporalDetection:
                             roiAbsDiff = absDiffBinaryMap[xSlice1 : xSlice2, ySlice1 : ySlice2].copy()
                             roiPosDiff = posDiff[xSlice1 : xSlice2,ySlice1 : ySlice2].copy()
                             roiNegDiff = negDiff[xSlice1 : xSlice2, ySlice1 : ySlice2].copy()
-                            
+
+                            meanPosDiff,stdevPosDiff = cv2.meanStdDev(roiPosDiff,mask= self.mMaskManager.mCurrentMask[xSlice1 : xSlice2,ySlice1 : ySlice2])
+                            meanNegDiff, stdevNegDiff = cv2.meanStdDev(roiNegDiff, mask= self.mMaskManager.mCurrentMask[xSlice1 : xSlice2,ySlice1 : ySlice2])
+                            # cv2.meanStdDev(negDiffImg, meanNegDiff, stdevNegDiff, self.mMaskManager.mCurrentMask)
+                            posDiffThreshold = np.mean(stdevPosDiff) * 5 + 10
+                            negDiffThreshold = np.mean(stdevNegDiff) * 5 + 10
                             if roiPosDiff.dtype == np.uint16 and roiNegDiff.dtype == np.uint16 :
                                 for a,b in np.ndindex(roiAbsDiff.shape):
                                     xCord = xSlice1 + a
@@ -684,6 +677,12 @@ class TemporalDetection:
                                 roiAbsDiff = absDiffBinaryMap[xSlice1: xSlice2,ySlice1 : ySlice2].copy()
                                 roiPosDiff = posDiff[xSlice1:xSlice2, ySlice1:ySlice2].copy()
                                 roiNegDiff = negDiff[xSlice1:xSlice2, ySlice1:ySlice2].copy()
+
+                                meanPosDiff,stdevPosDiff = cv2.meanStdDev(roiPosDiff,mask= self.mMaskManager.mCurrentMask[xSlice1 : xSlice2,ySlice1 : ySlice2])
+                                meanNegDiff, stdevNegDiff = cv2.meanStdDev(roiNegDiff, mask= self.mMaskManager.mCurrentMask[xSlice1 : xSlice2,ySlice1 : ySlice2])
+                                # cv2.meanStdDev(negDiffImg, meanNegDiff, stdevNegDiff, self.mMaskManager.mCurrentMask)
+                                posDiffThreshold = np.mean(stdevPosDiff) * 5 + 10
+                                negDiffThreshold = np.mean(stdevNegDiff) * 5 + 10
                                 
                                 if roiPosDiff.dtype == np.uint16 and roiNegDiff.dtype == np.uint16 :
                                     for a,b in np.ndindex(roiAbsDiff.shape):

@@ -39,8 +39,7 @@ class Mask:
             self.saturatedValue = 4092
         else :
             self.saturatedValue = 254
-
-    
+ 
     def applyMask(self, currFrame):
         # Create a mask .
         if self.mMaskToCreate :
