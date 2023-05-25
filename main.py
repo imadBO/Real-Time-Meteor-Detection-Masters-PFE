@@ -28,7 +28,7 @@ def saveEvent(dataQueue,h,w, geToSave):
     date = saveData[0].mDate
     fileName = f"event{date.year}-{date.month}-{date.day}-{date.hours}-{date.minutes}-{date.seconds}"
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
-    writer = cv2.VideoWriter(f"/events/{fileName}.mp4", fourcc, 25.0, (h,w))
+    writer = cv2.VideoWriter(f"{fileName}.mp4", fourcc, 25.0, (h,w))
     for elt in saveData :
         cv2.putText(elt.mImg, f"{elt.mDate.year}/{elt.mDate.month}/{elt.mDate.day}  {elt.mDate.hours}:{elt.mDate.minutes}:{elt.mDate.seconds}", (15,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (0,0,255), 1, cv2.LINE_AA)
         writer.write(elt.mImg)
