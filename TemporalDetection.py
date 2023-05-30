@@ -521,7 +521,7 @@ class TemporalDetection:
             if not p1.exists():
                 pathlib.Path.mkdir(p1)      
 
-            debugSubDir = ["original", "absolute_difference", "event_map_initial", "event_map_filtered", "absolute_difference_thresholded", "neg_difference_thresholded", "pos_difference_thresholded", "neg_difference", "pos_difference", "ge_map", "ge_map_final", "events"]  
+            debugSubDir = ["original", "absolute_difference", "event_map_initial", "event_map_filtered", "absolute_difference_thresholded", "neg_difference_thresholded", "pos_difference_thresholded", "neg_difference", "pos_difference", "ge_map", "ge_map_final"]  
             for sub_dir in debugSubDir:
                 path = pathlib.Path(self.mDebugCurrentPath + sub_dir)
 

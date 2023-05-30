@@ -46,7 +46,15 @@ class detectionParam:
             self.DET_LE_MAX:int = 9 # From 1 to 10 .
             self.DET_GE_MAX:int = 9
             # self.DET_SAVE_GE_INFOS:bool = False
+##########################################################
+#                 Camera parameters                      #
+##########################################################
 
+class CameraParam:
+    def __init__(self):
+        self.FPS = 30
+        self.GAIN = 300
+        self.EXPOSURE = 0
 
 ##########################################################
 #                 Station parameters                     #
